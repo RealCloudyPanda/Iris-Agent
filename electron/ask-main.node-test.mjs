@@ -185,3 +185,49 @@ test("arguments are validated", async () => {
   h.ask.busy = () => true;
   assert.deepEqual(call("ask:send", { botId: "b", text: "hi" }), { ok: false, error: "busy" });
 });
+
+function deferredCapture(h) {
+  const pending = [];
+  h.capture.capture = () => new Promise(resolve => pending.push(() => resolve({ png: Buffer.from("LATE"), preview: "data:image/png;base64,LL" })));
+  return () => pending.shift()();
+}
+
+for (const [what, letGo] of [
+  ["clear", h => h.ask.clearCapture()],
+  ["close", h => h.ask.close()],
+]) {
+  test(`a capture still running when the user lets go (${what}) is discarded and never uploaded`, async () => {
+    const h = harness();
+    const finish = deferredCapture(h);
+    const choosing = h.ask.chooseWindow("window:1:0");
+    letGo(h);
+    finish();
+    assert.deepEqual(await choosing, { error: "stale" });
+    assert.equal(h.ask.held(), false);
+  });
+}
+
+test("a capture still running when the user sends is not attached to that ask or the next one", async () => {
+  const h = harness();
+  const finish = deferredCapture(h);
+  const choosing = h.ask.chooseWindow("window:1:0");
+  const sent = h.ask.send({ botId: "codex-bot", text: "first" });
+  finish();
+  assert.deepEqual(await choosing, { error: "stale" });
+  assert.equal(h.ask.held(), false);
+  await h.answer("id-1");
+  await sent;
+  assert.equal(h.posted("/api/attachments").length, 0);
+});
+
+test("only the latest of two overlapping captures is kept", async () => {
+  const h = harness();
+  const finish = deferredCapture(h);
+  const first = h.ask.chooseWindow("window:1:0");
+  const second = h.ask.chooseWindow("window:1:0");
+  finish();
+  finish();
+  assert.deepEqual(await first, { error: "stale" });
+  assert.deepEqual(await second, { preview: "data:image/png;base64,LL" });
+  assert.equal(h.ask.held(), true);
+});

@@ -42,6 +42,8 @@ export function createAskPrefs(store, log = () => {}) {
 export function createAsk({ request, prefs, serverKey, capture, push, makeId = randomUUID, log = () => {} }) {
   const server = createTalkServer({ request, prefs: null, serverKey });
   let held = null, asking = null, lastChat = null;
+  /** Bumped whenever the user lets go of a capture (clear, hide, send, close): a capture finishing later is stale. */
+  let generation = 0;
 
   const drop = () => {
     if (!held) return;
@@ -106,13 +108,15 @@ export function createAsk({ request, prefs, serverKey, capture, push, makeId = r
     },
     pickWindows: () => capture.list(),
     async chooseWindow(id) {
+      const mine = ++generation;
       drop();
       const shot = await capture.capture(id);
+      if (mine !== generation) return { error: "stale" };
       if (!shot) return { error: "gone" };
       held = { png: shot.png };
       return { preview: shot.preview };
     },
-    clearCapture: drop,
+    clearCapture() { generation += 1; drop(); },
     held: () => held !== null,
     busy: () => asking !== null,
     openPermissionSettings: () => capture.openPermissionSettings(),
@@ -126,6 +130,7 @@ export function createAsk({ request, prefs, serverKey, capture, push, makeId = r
       const controller = new AbortController();
       asking = controller;
       const png = held?.png ?? null;
+      generation += 1;
       drop();
       try {
         await run(args, png, controller.signal);
@@ -141,6 +146,7 @@ export function createAsk({ request, prefs, serverKey, capture, push, makeId = r
     },
     close() {
       asking?.abort(new Error("closed"));
+      generation += 1;
       held = null;
     },
   };

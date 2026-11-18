@@ -83,3 +83,9 @@ test("the window is made lazily, locked down, focusable, and hidden (not destroy
   panel.close();
   assert.equal(win.destroyed, true);
 });
+
+test("the page drops a window preview that arrives after the user let go", () => {
+  const html = askPanelHtml();
+  assert.match(html, /const mine=\+\+pick;const r=await api\.chooseWindow\(id\);if\(mine!==pick\|\|!inc\.checked\|\|r\?\.error==="stale"\)return;/);
+  for (const letGo of ['if(!inc.checked){pick++;', 'pick++;const r=await api.send(', '"click",async()=>{pick++;', "const hide=()=>{pick++;"]) assert.ok(html.includes(letGo), letGo);
+});
