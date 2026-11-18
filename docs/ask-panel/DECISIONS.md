@@ -44,7 +44,7 @@ Status legend: **Accepted** (user decided) · **Amended** (accepted, then change
 | D26 | A sent screenshot is an ordinary deletable attachment; Cancel never writes to disk; downscale to a 2000 px long edge before upload | **Amended** — see "Evidence that changes decisions" |
 | D27 | No approve buttons in the panel; it shows "Needs you · Open chat"; Esc hides, the turn continues | Accepted |
 | D28 | "Include window" disabled with a reason unless the bot's engine is confirmed image-capable (Codex in MVP) | Accepted |
-| D29 | Pin one upstream commit; delete `enterprise/`; separate demo data for dev and tests | Accepted (`enterprise/` deletion not done yet; it is its own task) |
+| D29 | Pin one upstream commit; delete `enterprise/`; separate demo data for dev and tests | Accepted (`enterprise/` deleted; dev data separated by D43) |
 
 ## Round 4 (2026-11-18)
 
@@ -60,7 +60,17 @@ Status legend: **Accepted** (user decided) · **Amended** (accepted, then change
 | D37 | Budget method: stock vs fork, 10 min idle, 5 runs, CPU/RSS/wakeups; pass = CPU within measured noise, no RSS growth before first use, no added timers/listeners; warm shortcut→panel < 150 ms. Numbers fixed only after the baseline | Accepted |
 | D38 | Accessibility minimum (VoiceOver labels, keyboard order, focus rings, reduced motion, upstream contrast check); test layers: `node --test` units, Vitest server tests with fake engine, hand-triggered live Codex test, written macOS manual checklist; one GitHub-hosted CI workflow, no provider calls | Accepted |
 | D39 | Public fork `RealCloudyPanda/mausbot-companion`, clone at `~/Developer/mausbot-companion`, Node 24 via fnm (system Node untouched) | Accepted, done |
-| D40 | No invisible/bidi Unicode in files *we* add or change, enforced by a CI check on the diff; upstream's existing functional uses stay untouched | **Proposed** (from the user's watermark request + "best practices") |
+| D40 | No invisible/bidi Unicode in files *we* add or change, enforced by a CI check on the diff; upstream's existing functional uses stay untouched | Accepted — `scripts/check-invisible-chars.mjs` checks the lines added in `base...HEAD`, so the ~30 upstream files that already use such characters stay untouched even when we edit them |
+
+## Round 5 (2026-11-18)
+
+| ID | Decision | Status |
+|---|---|---|
+| D41 | Screenshot retention is documented as it is, not as we would like it: a sent screenshot is stored as `attachments/<uuid>.png` in the data folder, as base64 inside Codex's own session log (`providers/codex-own/<hash>/codex/sessions/…/rollout-*.jsonl`), and as text the model read from it in the conversation event log, the native log, the bot's daily memory log and the memory journal; it is also sent to OpenAI. M1 adds a test task that deletes a conversation and lists which of these copies remain. A cleanup step is decided only if copies survive | Accepted |
+| D42 | Spike, before M1 ends, whether the "Quick asks" conversation can be excluded from bot memory (daily log, journal) with existing settings; if it cannot, record that and decide then | Accepted |
+| D43 | Dev isolation as implemented (amends Evidence 2): when `!app.isPackaged`, Electron uses `<appData>/OpenMausBot-Dev` for userData (so its own single-instance lock and files) and its own logs folder, set before any `getPath("userData")` and before `requestSingleInstanceLock()`; the server data folder defaults to `~/.openmausbot-dev` unless `OMB_DATA_DIR` is set. Packaged builds are unchanged (`electron/dev-isolation.mjs`, `electron/dev-isolation-boot.mjs`). Not yet verified by launching a dev window | Accepted |
+| D44 | Upstream workflows (self-hosted `boat-*` runners, release secrets) removed; replaced by one `.github/workflows/ask-panel-ci.yml` on GitHub-hosted `macos-latest`: lint, typecheck, `test:electron`, the focused Vitest files of SPIKES.md §A and the invisible-character check; `contents: read`, no secrets, no provider calls | Accepted (not yet run on GitHub) |
+| D45 | Milestone 1 order: groundwork → text ask from main process → panel window → picker / capture / preview → image send → tests | Accepted |
 
 ## Evidence that changes decisions
 
@@ -74,7 +84,8 @@ Status legend: **Accepted** (user decided) · **Amended** (accepted, then change
    (dev) and `…/OpenMausBot` (installed) are the **same directory** (same inode; macOS volumes are case-insensitive),
    so a dev window would share `credentials.bin`, window state and the single-instance lock with the real app.
    The server is isolated by `OMB_DATA_DIR`, the Electron shell is not. Dev Electron must not be launched until an
-   isolation method is verified.
+   isolation method is verified. **Amended by D43:** dev builds now use `OpenMausBot-Dev` and `~/.openmausbot-dev`;
+   the method is unit-tested but has not yet been checked by launching a dev window.
 3. **D16 / acceptance test 9 — new bots default to full access.** In a fresh data folder the default MausBot bot is
    `approvalMode: "full"`, and a bot created through `POST /api/bots` takes the saved template (full) unless
    `settings.approvalMode` is given. The demo bot must be set to `ask` explicitly, and the approval test must use it.
@@ -85,9 +96,10 @@ Status legend: **Accepted** (user decided) · **Amended** (accepted, then change
 
 ## Requirements status
 
-- **Resolved:** D01–D39.
-- **Unresolved (Round 5):** screenshot retention given Evidence 1; dev Electron isolation method; error-state wording;
-  demo script; Milestone 1 task order; D40.
+- **Resolved:** D01–D45 (D29's `enterprise/` deletion is done).
+- **Open tasks from Round 5:** the conversation-deletion retention test (D41); the Quick-asks memory-exclusion spike
+  (D42); first launch of a dev window to confirm D43; first GitHub run of `ask-panel-ci.yml` (D44).
+- **Unresolved:** error-state wording; demo script.
 - **Deferred:** Claude engine, native speech, voice input, Windows, Linux, per-app exclusions.
 - **Impossible:** none found. Claude stays deferred by choice: Anthropic's compliance page does not prevent a user
   signing in to the unmodified Claude Code binary, but D13 puts Codex first.
