@@ -16,14 +16,22 @@ export function buildSpeechHelper() {
   mkdirSync(path.join(contents, "MacOS"), { recursive: true });
   copyFileSync(path.join(resourcesDir, "speech-helper-Info.plist"), path.join(contents, "Info.plist"));
   // Universal, since the helper rides in both arm64 and x64 apps and bare `swiftc` builds host-arch only. macos12 = LSMinimumSystemVersion.
-  const slices = ["arm64", "x86_64"].map((arch) => {
+  // A toolchain without the other arch's SDK slice (common on Apple silicon CLT installs) still gets a host-arch helper.
+  const hostArch = process.arch === "arm64" ? "arm64" : "x86_64";
+  const slices = ["arm64", "x86_64"].flatMap((arch) => {
     const slice = `${speechHelperBinary}-${arch}`;
-    execFileSync(
-      "swiftc",
-      ["-O", "-target", `${arch}-apple-macos12`, path.join(resourcesDir, "speech-helper.swift"), "-o", slice],
-      { stdio: "inherit", timeout: 120_000 },
-    );
-    return slice;
+    try {
+      execFileSync(
+        "swiftc",
+        ["-O", "-target", `${arch}-apple-macos12`, path.join(resourcesDir, "speech-helper.swift"), "-o", slice],
+        { stdio: "inherit", timeout: 120_000 },
+      );
+    } catch (error) {
+      if (arch === hostArch) throw error;
+      console.warn(`speech helper: ${arch} slice could not be built here; building ${hostArch} only`);
+      return [];
+    }
+    return [slice];
   });
   execFileSync("lipo", ["-create", ...slices, "-output", speechHelperBinary], {
     stdio: "inherit",
@@ -31,8 +39,8 @@ export function buildSpeechHelper() {
   });
   for (const slice of slices) rmSync(slice, { force: true });
   const archs = execFileSync("lipo", ["-archs", speechHelperBinary], { timeout: 60_000 }).toString();
-  if (!archs.includes("arm64") || !archs.includes("x86_64")) {
-    throw new Error(`speech helper is not universal: ${archs.trim()}`);
+  if (!archs.includes(hostArch) || (slices.length === 2 && !archs.includes("x86_64"))) {
+    throw new Error(`speech helper is missing a built slice: ${archs.trim()}`);
   }
   // Ad-hoc signed for dev with the release's audio entitlement; electron-builder replaces it when signing.
   execFileSync(
