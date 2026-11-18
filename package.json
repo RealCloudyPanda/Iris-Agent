@@ -1,6 +1,6 @@
 {
   "name": "openmausbot",
-  "productName": "Iris",
+  "productName": "Iris Agent",
   "private": true,
   "version": "0.1.169",
   "description": "A local-first chat app for running a team of AI agents.",

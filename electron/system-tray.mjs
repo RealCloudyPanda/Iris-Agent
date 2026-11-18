@@ -22,7 +22,7 @@ export function createSystemTray({ Tray, Menu, nativeImage, iconPath, getWindow,
     { type: "separator" },
     { label: t("native.tray.quit"), click: onQuit },
   ]));
-  tray.setToolTip("Iris");
+  tray.setToolTip("Iris Agent");
   label();
   tray.on("click", show);
   tray.on("double-click", show);

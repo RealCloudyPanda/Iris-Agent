@@ -17,7 +17,7 @@ function tray(ask) {
 }
 
 test("without an Ask panel the menu is unchanged", () => {
-  assert.deepEqual(tray().labels(), ["Open Iris", "separator", "Quit Iris"]);
+  assert.deepEqual(tray().labels(), ["Open Iris Agent", "separator", "Quit Iris Agent"]);
 });
 
 test("the Ask item appears once the panel exists, and opens it", () => {
@@ -26,7 +26,7 @@ test("the Ask item appears once the panel exists, and opens it", () => {
   assert.equal(t.labels().length, 3);
   item = { label: "Ask… (shortcut unavailable)", click: () => { opened += 1; } };
   t.created.relabel();
-  assert.deepEqual(t.labels(), ["Open Iris", "Ask… (shortcut unavailable)", "separator", "Quit Iris"]);
+  assert.deepEqual(t.labels(), ["Open Iris Agent", "Ask… (shortcut unavailable)", "separator", "Quit Iris Agent"]);
   t.menu()[1].click();
   assert.equal(opened, 1);
 });

@@ -27,7 +27,7 @@ async function onAsk(run: (f: {
   const dump = () => { try { return JSON.parse(readFileSync(fixture.fixtureDumpPath, "utf8")); } catch { return null; } };
   const config = () => JSON.parse(readFileSync(join(fixture.info.dataDir, "config.json"), "utf8"));
   try {
-    const iris = (await api("POST", "/api/bots", { name: "Iris" }, 201)).bot;
+    const iris = (await api("POST", "/api/bots", { name: "Iris Agent" }, 201)).bot;
     await api("PATCH", `/api/bots/${iris.id}`, { approvalMode: "ask" });
     const card = async () => (await api("GET", `/api/threads/${iris.threadId}/messages`)).messages.find((message: any) => message.card?.mcpRequest);
     const idle = () => expect.poll(async () => (await api("GET", "/api/bots")).bots.every((bot: any) => !bot.busy), { timeout: 20_000 }).toBe(true);

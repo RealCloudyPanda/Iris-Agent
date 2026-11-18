@@ -9,7 +9,7 @@ import { RECHECK_FAILED_MS, createMcpHealth, offNotice, type McpHealthDeps } fro
 const dirs: string[] = [];
 afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }); });
 
-const IRIS = { id: "iris", name: "Iris" }, PAUL = { id: "paul", name: "Paul" };
+const IRIS = { id: "iris", name: "Iris Agent" }, PAUL = { id: "paul", name: "Paul" };
 const blender: StdioMcpSpec & { bot?: string } = { command: "/usr/bin/python3", args: ["/data/workspaces/iris/tools/blender-mcp/server.py"], env: {}, bot: "iris" };
 const notes: StdioMcpSpec = { command: "npx", args: ["-y", "@x/notes-mcp"], env: {} };
 
@@ -65,7 +65,7 @@ describe("checking that command servers start", () => {
   it("names the bot whose own server does not start", async () => {
     const { health, told } = fixture({ startsFor: (name) => name !== "blender" });
     await health.prepare("iris", ["blender"]);
-    expect(told).toEqual([{ text: "Iris's Blender tool doesn't start, so it's off for now. It comes back on its own once it starts.", about: "iris" }]);
+    expect(told).toEqual([{ text: "Iris Agent's Blender tool doesn't start, so it's off for now. It comes back on its own once it starts.", about: "iris" }]);
     expect(offNotice("blender", null)).toBe("The Blender tool doesn't start, so it's off for now. It comes back on its own once it starts.");
   });
 

@@ -79,10 +79,10 @@ describe("the notice", () => {
     expect(limitNoticeText({ engine: "Codex", bot: "Kai", resetsAt, backup: "Claude" }, "UTC").replace(/\d{1,2}:\d{2}\s?[AP]M/, "14:00"))
       .toMatch(/^Codex reached its limit until (?:[A-Z][a-z]{2} )?14:00, so Kai is using Claude meanwhile\.$/);
     expect(limitNoticeText({ engine: "Codex", bot: "Kai", backup: "Claude" })).toBe("Codex reached its limit, so Kai is using Claude meanwhile.");
-    expect(limitNoticeText({ engine: "Claude claude-opus-5-5", bot: "Iris", credits: true, backup: "Claude claude-sonnet-5" }))
-      .toBe("Claude claude-opus-5-5's extra usage credits are used up, so Iris is using Claude claude-sonnet-5 meanwhile.");
+    expect(limitNoticeText({ engine: "Claude claude-opus-5-5", bot: "Iris Agent", credits: true, backup: "Claude claude-sonnet-5" }))
+      .toBe("Claude claude-opus-5-5's extra usage credits are used up, so Iris Agent is using Claude claude-sonnet-5 meanwhile.");
     expect(limitNoticeText({ engine: "Codex", bot: "Kai" })).toBe("Codex reached its limit, so Kai waits: no backup you chose can take over.");
-    expect(limitNoticeText({ engine: "Claude claude-opus-5-5", bot: "Iris", credits: true, resetsAt: Date.now() + 86_400_000 }))
-      .toBe("Claude claude-opus-5-5's extra usage credits are used up, so Iris waits: no backup you chose can take over.");
+    expect(limitNoticeText({ engine: "Claude claude-opus-5-5", bot: "Iris Agent", credits: true, resetsAt: Date.now() + 86_400_000 }))
+      .toBe("Claude claude-opus-5-5's extra usage credits are used up, so Iris Agent waits: no backup you chose can take over.");
   });
 });

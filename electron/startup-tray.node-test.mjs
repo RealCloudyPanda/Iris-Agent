@@ -149,11 +149,11 @@ test("the tray's menu and the startup screen speak the app's language, and the t
   }
   const tray = createSystemTray({ Tray, Menu: { buildFromTemplate: value => value }, nativeImage: { createFromPath: () => ({ resize: () => ({}) }) },
     iconPath, getWindow: () => null, onQuit: () => {}, t: text.t });
-  assert.deepEqual(trayInstance.menu.map(item => item.label), ["Open Iris", undefined, "Quit Iris"]);
+  assert.deepEqual(trayInstance.menu.map(item => item.label), ["Open Iris Agent", undefined, "Quit Iris Agent"]);
   text.set("pt-br");
   tray.relabel();
-  assert.deepEqual(trayInstance.menu.map(item => item.label), ["Abrir o Iris", undefined, "Sair do Iris"]);
-  assert.equal(trayInstance.tooltip, "Iris");
+  assert.deepEqual(trayInstance.menu.map(item => item.label), ["Abrir o Iris Agent", undefined, "Sair do Iris Agent"]);
+  assert.equal(trayInstance.tooltip, "Iris Agent");
   const html = startupScreenHtml(iconPath, { t: text.t, lang: text.intlTag() });
   assert.match(html, /<html lang="pt-BR">/);
   assert.match(html, /<button aria-label="Fechar"/);

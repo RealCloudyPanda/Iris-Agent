@@ -39,12 +39,12 @@ it("a bot's server from a conversation folder is kept in its own folder, and a s
     } };
   };
   try {
-    const iris = (await api("POST", "/api/bots", { name: "Iris" }, 201)).bot;
+    const iris = (await api("POST", "/api/bots", { name: "Iris Agent" }, 201)).bot;
     const paul = (await api("POST", "/api/bots", { name: "Paul" }, 201)).bot;
     const first = await turnOf(iris);
     const token: string = first.mounts.agents.env.OMB_COMMS_TOKEN;
 
-    // Iris writes a server into this conversation's folder and adds it, as it did on the Cloud.
+    // Iris Agent writes a server into this conversation's folder and adds it, as it did on the Cloud.
     const chatFolder = join(fixture.info.dataDir, "task-workspaces", iris.id, iris.threadId, "sketch");
     mkdirSync(chatFolder, { recursive: true });
     copyFileSync(FAKE_MCP, join(chatFolder, "server.ts"));
@@ -71,10 +71,10 @@ it("a bot's server from a conversation folder is kept in its own folder, and a s
 
     const pauls = (await turnOf(paul)).mounts;
     expect(pauls.agents).toBeDefined();
-    expect(JSON.stringify(pauls.sketch), "every bot reaches Iris's folder here").toContain(JSON.stringify(kept).slice(1, -1));
+    expect(JSON.stringify(pauls.sketch), "every bot reaches Iris Agent's folder here").toContain(JSON.stringify(kept).slice(1, -1));
     expect(pauls.broken, "a server that doesn't start for Paul").toBeUndefined();
     const iriss = (await turnOf(iris)).mounts;
-    expect(JSON.stringify(iriss.sketch), "Iris's turn starts it from its own folder").toContain(JSON.stringify(kept).slice(1, -1));
+    expect(JSON.stringify(iriss.sketch), "Iris Agent's turn starts it from its own folder").toContain(JSON.stringify(kept).slice(1, -1));
     expect(iriss.broken).toBeUndefined();
 
     const notices = (await api("GET", "/api/notifications")).notifications.filter((entry: any) => entry.kind === "notice");

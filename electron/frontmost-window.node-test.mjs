@@ -27,7 +27,7 @@ test("read and activate run the helper on macOS", async () => {
   assert.deepEqual(exec.calls.at(-1), ["/helper", ["--activate", "42"]]);
 });
 
-test("Iris itself in front is no previous window; activating Iris or a bad pid does nothing", async () => {
+test("Iris Agent itself in front is no previous window; activating Iris Agent or a bad pid does nothing", async () => {
   const exec = fakeExec((args, done) => done(null, OUT));
   const front = createFrontmostWindow({ platform: "darwin", execFile: exec.execFile, binary: () => "/helper", ownPid: 42 });
   assert.equal((await front.read()).previous, null);

@@ -60,7 +60,7 @@ export function createFrontmostWindow({ platform = process.platform, execFile = 
     return raw === null ? null : parseFrontmost(raw);
   };
   return {
-    /** `{ previous, windows }` or null; `previous` is null when Iris itself is in front. */
+    /** `{ previous, windows }` or null; `previous` is null when Iris Agent itself is in front. */
     async read() {
       const result = await read().catch(() => null);
       if (result?.previous?.pid === ownPid) result.previous = null;

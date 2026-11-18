@@ -10,7 +10,7 @@ import { fakeDesktopFrame } from "./fake-desktop-frame.ts";
 import { fixtureApi } from "./preview-fixture.ts";
 
 const MAP_TEAMS = [
-  { team: "Research", bots: ["Iris", "Theo", "Mira", "Jonah"] },
+  { team: "Research", bots: ["Iris Agent", "Theo", "Mira", "Jonah"] },
   { team: "Growth", bots: ["Nova", "Felix", "Ruby", "Omar"] },
   { team: "Design", bots: ["Luna", "Kai", "Esme", "Remy"] },
   { team: "Ops", bots: ["Atlas", "Wren", "Sol", "Juno"] },

@@ -8,7 +8,7 @@ import { acpReadPaths, ownReadRoots, readOnlyPaths, readToolPaths, readsOwnFiles
 const dirs: string[] = [];
 afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }); });
 
-/** A data folder with Iris's own folder, a conversation folder, her SOUL.md and another bot's folder. */
+/** A data folder with Iris Agent's own folder, a conversation folder, her SOUL.md and another bot's folder. */
 function dataFolder() {
   const data = mkdtempSync(join(tmpdir(), "omb-own-reads-"));
   dirs.push(data);
@@ -91,7 +91,7 @@ describe("a bot's own files", () => {
     expect(command(`cat ${join(data, "config.json")}`)).toBe(false);
     expect(command(`cat ${join(own, "missing.md")}`), "only files that exist").toBe(false);
     expect(command(`cat ${join(own, "MEMORY.md")} ${join(data, "config.json")}`), "every path").toBe(false);
-    expect(readsOwnFiles(data, "paul", { command: { command: `cat ${join(own, "MEMORY.md")}`, cwd: conversation } }), "Iris's files are not Paul's").toBe(false);
+    expect(readsOwnFiles(data, "paul", { command: { command: `cat ${join(own, "MEMORY.md")}`, cwd: conversation } }), "Iris Agent's files are not Paul's").toBe(false);
     expect(readsOwnFiles(data, "../iris", { reads: [join(own, "MEMORY.md")] })).toBe(false);
     expect(ownReadRoots(data, "iris")).toHaveLength(3);
   });

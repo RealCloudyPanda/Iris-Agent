@@ -14,8 +14,8 @@ export interface BrandStatus {
   notice?: string;
 }
 
-export const DEFAULT_BRAND: Brand = { name: "Iris", tagline: "Iris — ask about your screen" };
-export const PRODUCT_NAME = "Iris";
+export const DEFAULT_BRAND: Brand = { name: "Iris Agent", tagline: "Iris Agent — ask about your screen" };
+export const PRODUCT_NAME = "Iris Agent";
 
 let current: BrandStatus = { brand: DEFAULT_BRAND, source: "default", file: "" };
 

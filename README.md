@@ -1,4 +1,4 @@
-Iris is a fork of OpenMausBot (Apache-2.0)
+Iris Agent is a fork of OpenMausBot (Apache-2.0)
 
 <div align="center">
 

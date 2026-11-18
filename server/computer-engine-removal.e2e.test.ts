@@ -186,7 +186,7 @@ describe("removing the Computer engine", () => {
     const main = opened.threadId;
     const other = starter.threadId;
     const { bot: auto } = await server.api("POST", "/api/bots", { name: "Atlas" });
-    const { bot: mixed } = await server.api("POST", "/api/bots", { name: "Iris" });
+    const { bot: mixed } = await server.api("POST", "/api/bots", { name: "Iris Agent" });
     const { task: mixedConversation } = await server.api("POST", `/api/bots/${mixed.id}/tasks`, {});
     await server.stop();
 
@@ -213,7 +213,7 @@ describe("removing the Computer engine", () => {
       delete saved.computer;
       for (const task of saved.tasks) task.modelSelection = onEngine("claude-fable-5");
     });
-    // Iris: on Claude and Auto, with its open conversation switched to the engine.
+    // Iris Agent: on Claude and Auto, with its open conversation switched to the engine.
     server.editSavedBot(mixed.id, saved => {
       saved.tasks.find((task: any) => task.threadId === mixedConversation.threadId).modelSelection = onEngine("claude-fable-5");
     });
@@ -245,7 +245,7 @@ describe("removing the Computer engine", () => {
     expect(movedMixed.computer).toBeUndefined();
     expect(await server.moveLines(mixed.threadId)).toEqual([]);
     expect(await server.moveLines(mixedConversation.threadId))
-      .toEqual([`This conversation now uses ${ENGINE_NAME}. ${REMOVED} It still works on Iris's cloud desktop.`]);
+      .toEqual([`This conversation now uses ${ENGINE_NAME}. ${REMOVED} It still works on Iris Agent's cloud desktop.`]);
     const mixedTask = movedMixed.tasks.find((task: any) => task.threadId === mixedConversation.threadId);
     expect(mixedTask.modelSelection).toEqual(replacement);
     expect(mixedTask).toMatchObject({ surface: "cloud", surfaceAuto: true });

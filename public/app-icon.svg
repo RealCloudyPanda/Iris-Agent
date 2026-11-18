@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <title>Iris</title>
+  <title>Iris Agent</title>
   <rect width="1024" height="1024" rx="224" fill="#300875"/>
   <g fill="#fffbea" stroke="#300875" stroke-width="18" stroke-linejoin="round">
     <path id="blade" d="M310 185 A380 380 0 0 1 686 185 L334 458 Q309 350 310 185Z"/>

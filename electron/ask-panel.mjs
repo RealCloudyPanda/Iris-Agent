@@ -17,7 +17,7 @@ export function askPanelBounds(workArea, height) {
 }
 
 export function askPanelHtml() {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><title>Ask Iris</title><style>
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><title>Ask Iris Agent</title><style>
 ${PANEL_THEME}
 *{box-sizing:border-box}html,body{margin:0;background:transparent;overflow:hidden;font:13px/1.4 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:var(--color-ink)}
 #card{display:flex;flex-direction:column;gap:12px;max-height:360px;padding:16px;border:1px solid var(--color-hairline);border-radius:14px;background:var(--color-panel);overflow:auto}
@@ -43,12 +43,12 @@ label{display:flex;gap:8px;align-items:center;color:var(--color-ink-secondary)}i
 #perm{color:var(--color-ink-secondary);font-size:12px}
 [hidden]{display:none!important}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
-</style></head><body><div id="card" role="dialog" aria-label="Ask Iris">
-<div class="heading"><strong>Iris</strong><span>Ask about your screen</span></div>
+</style></head><body><div id="card" role="dialog" aria-label="Ask Iris Agent">
+<div class="heading"><strong>Iris Agent</strong><span>Ask about your screen</span></div>
 <div class="row"><select id="bot" class="grow" aria-label="Bot"></select><button id="close" type="button" aria-label="Hide (Esc)">✕</button></div>
 <textarea id="q" rows="2" aria-label="Your question" placeholder="What would you like to know?"></textarea>
 <div class="row"><label class="grow"><input id="inc" type="checkbox" aria-keyshortcuts="Meta+I"> Include window (⌘I)</label><span id="why"></span><button id="send" type="button">Ask</button></div>
-<div id="perm" hidden><span>Screen Recording is off for Iris. Text asks still work.</span> <button id="settings" type="button">Open Privacy settings</button></div>
+<div id="perm" hidden><span>Screen Recording is off for Iris Agent. Text asks still work.</span> <button id="settings" type="button">Open Privacy settings</button></div>
 <div id="picker" role="listbox" aria-label="Windows" hidden></div>
 <div id="chip" hidden><img id="shot" alt="Selected window preview"><button id="unchip" type="button" aria-label="Remove window">✕</button></div>
 <div class="row"><span id="status" class="grow" role="status" aria-live="polite"></span><button id="open" type="button" hidden>Open chat</button></div>
@@ -57,7 +57,7 @@ label{display:flex;gap:8px;align-items:center;color:var(--color-ink-secondary)}i
 const api=window.ask,$=id=>document.getElementById(id);
 const bot=$("bot"),q=$("q"),inc=$("inc"),picker=$("picker"),chip=$("chip"),status=$("status"),reply=$("reply");
 const STATES={sending:"Sending…",thinking:"Thinking…","needs-you":"Needs you · Open chat",done:"Done",error:"Something went wrong"};
-const ERRORS={"image-engine":"This chat's model can't see images. Send without the window or pick a Codex bot.",busy:"Still answering the last ask.","server-down":"Couldn't reach Iris. Check the app and try again.",starting:"Iris is starting.",refused:"The server refused the ask.",moved:"This computer's bots moved to My Cloud.",lost:"Lost the connection; the reply is in the chat.",upload:"The screenshot could not be uploaded.","no-bot":"That bot is gone.",failed:"Couldn't answer. Try again or open the chat."};
+const ERRORS={"image-engine":"This chat's model can't see images. Send without the window or pick a Codex bot.",busy:"Still answering the last ask.","server-down":"Couldn't reach Iris Agent. Check the app and try again.",starting:"Iris Agent is starting.",refused:"The server refused the ask.",moved:"This computer's bots moved to My Cloud.",lost:"Lost the connection; the reply is in the chat.",upload:"The screenshot could not be uploaded.","no-bot":"That bot is gone.",failed:"Couldn't answer. Try again or open the chat."};
 let bots=[],busy=false,captured=false,pick=0;
 const capable=()=>bots.find(b=>b.id===bot.value)?.imageCapable===true;
 function syncToggle(){const ok=capable();inc.disabled=!ok;$("why").textContent=ok?"":"This bot can't see images";if(!ok&&inc.checked){inc.checked=false;toggled()}bot.disabled=busy}

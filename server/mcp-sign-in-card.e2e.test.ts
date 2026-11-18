@@ -6,7 +6,7 @@ import { expect, it } from "vitest";
 import { launchVerificationServer } from "../scripts/control-omb.ts";
 import { startFakePostiz, type FakePostiz } from "./testing/fake-postiz.ts";
 
-/** A real server with the fake Claude engine held mid-turn until the gate opens, a stand-in OAuth provider, and Iris's
+/** A real server with the fake Claude engine held mid-turn until the gate opens, a stand-in OAuth provider, and Iris Agent's
  * turn that has added the provider's server and called sign_in. */
 async function onSignInCard(run: (f: {
   api: (method: string, path: string, body?: unknown, expected?: number, token?: string) => Promise<any>;
@@ -28,7 +28,7 @@ async function onSignInCard(run: (f: {
   };
   const dump = () => { try { return JSON.parse(readFileSync(fixture.fixtureDumpPath, "utf8")); } catch { return null; } };
   try {
-    const iris = (await api("POST", "/api/bots", { name: "Iris" }, 201)).bot;
+    const iris = (await api("POST", "/api/bots", { name: "Iris Agent" }, 201)).bot;
     const messages = async () => (await api("GET", `/api/threads/${iris.threadId}/messages`)).messages as any[];
     await api("POST", `/api/bots/${iris.id}/messages`, { threadId: iris.threadId, text: "Connect Postiz", sendId: "mcp-sign-in-e2e-send-0001" }, 202);
     let first: any;
@@ -60,7 +60,7 @@ it("a bot adds an OAuth server and asks the person to sign in; they sign in on t
   await endTurn();
   const shown = await card();
   expect(shown.connector).toMatchObject({ slug: "postiz", label: "Postiz", status: "required" });
-  expect(shown.text).toBe("Postiz's MCP server needs a sign-in. Open this conversation in OpenMausBot to sign in.");
+  expect(shown.text).toBe("Postiz's MCP server needs a sign-in. Open this conversation in Iris Agent to sign in.");
 
   const window = await api("POST", "/api/auth/pairing", { scopes: ["client"] });
   const paired = await (await fetch(`${url}/api/auth/pair`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ code: window.code }) })).json() as { token: string };

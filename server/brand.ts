@@ -38,8 +38,8 @@ export const brandSchema = z
 
 export type Brand = z.infer<typeof brandSchema>;
 
-export const DEFAULT_BRAND: Brand = { name: "Iris", tagline: "Iris — ask about your screen" };
-export const PRODUCT_NAME = "Iris";
+export const DEFAULT_BRAND: Brand = { name: "Iris Agent", tagline: "Iris Agent — ask about your screen" };
+export const PRODUCT_NAME = "Iris Agent";
 
 export interface BrandStatus {
   brand: Brand;

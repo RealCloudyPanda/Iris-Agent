@@ -15,7 +15,7 @@ import { claimedNotice, createMcpServersHost, startCheckTimeout } from "./mcp-se
 const dirs: string[] = [];
 afterEach(() => { for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true }); });
 
-const IRIS = { id: "iris", name: "Iris" }, PAUL = { id: "paul", name: "Paul" }, ROSA = { id: "rosa", name: "Rosa", mcpServers: [] as string[] };
+const IRIS = { id: "iris", name: "Iris Agent" }, PAUL = { id: "paul", name: "Paul" }, ROSA = { id: "rosa", name: "Rosa", mcpServers: [] as string[] };
 const NOTES_ONLY = { id: "nina", name: "Nina", toolScope: { allow: ["mcp:notes:*"] } }, NO_SERVERS = { id: "otto", name: "Otto" };
 
 function script(data: string, ...parts: string[]): string {
@@ -48,7 +48,7 @@ function setup(options: { boxed?: boolean; data?: string; bots?: Array<{ id: str
     boxed: () => options.boxed ?? true,
     policy: (servers) => servers,
     tell: (text, about) => told.push({ text, about: about.id }),
-    // The image's python has no `mcp` module: these start only in Iris's own box, where it is installed.
+    // The image's python has no `mcp` module: these start only in Iris Agent's own box, where it is installed.
     start: async (name, server, botId) => {
       started.push(`${name}:${botId}`);
       if (name === "broken") return { ok: false, error: "The server stopped before the MCP handshake finished." };
@@ -63,14 +63,14 @@ it("moves servers in one bot's folders to that bot once, says so once, and keeps
   host.boot();
   await host.health.settled();
   expect(told).toEqual([
-    { text: "The Blender, Blender-own and Sketch-suite tools only work for Iris, so they're off for your other bots.", about: "iris" },
+    { text: "The Blender, Blender-own and Sketch-suite tools only work for Iris Agent, so they're off for your other bots.", about: "iris" },
     { text: "The Broken tool doesn't start, so it's off for now. It comes back on its own once it starts.", about: "iris" },
   ]);
   expect((cfg.mcpServers!.blender as { args: string[] }).args).toEqual([join(data, "workspaces", "iris", "tools", "blender-mcp-2", "server.py")]);
   expect(Object.keys(host.mounted(IRIS)).sort()).toEqual(["blender", "blender-own", "notes", "sketch-suite"]);
   expect(Object.keys(host.mounted(PAUL)).sort()).toEqual(["notes"]);
   expect(host.mounted(ROSA), "a bot given no servers gets none").toEqual({});
-  expect(started.sort(), "Iris's own servers are started for Iris only, every bot's once for all").toEqual(["blender-own:iris", "blender:iris", "broken:iris", "notes:iris", "sketch-suite:iris"]);
+  expect(started.sort(), "Iris Agent's own servers are started for Iris Agent only, every bot's once for all").toEqual(["blender-own:iris", "blender:iris", "broken:iris", "notes:iris", "sketch-suite:iris"]);
   expect(host.off(PAUL)).toEqual([{ name: "broken", error: "The server stopped before the MCP handshake finished." }]);
   expect(host.given(PAUL).sort(), "a server that did not start is still set for Paul, so a change to it reaches him").toEqual(["broken", "notes"]);
   expect(host.off(NOTES_ONLY), "a bot whose tool selection never reaches it is not told about it").toEqual([]);
@@ -109,11 +109,11 @@ it("moves servers over once: a server added in Settings afterwards stays every b
 it("never makes a server the own of a deleted bot whose folder was left behind", () => {
   const { cfg, host } = setup({ bots: [PAUL, ROSA] });
   host.boot();
-  expect(Object.values(cfg.mcpServers!).some((server) => "bot" in (server as object)), "Iris is gone").toBe(false);
+  expect(Object.values(cfg.mcpServers!).some((server) => "bot" in (server as object)), "Iris Agent is gone").toBe(false);
 });
 
 it("says it in one plain line per bot", () => {
-  expect(claimedNotice("Iris", ["blender"])).toBe("The Blender tool only works for Iris, so it's off for your other bots.");
+  expect(claimedNotice("Iris Agent", ["blender"])).toBe("The Blender tool only works for Iris Agent, so it's off for your other bots.");
 });
 
 it("tests a command server as its bot's turns start it, from that bot's own folder, and any other as any bot's", () => {

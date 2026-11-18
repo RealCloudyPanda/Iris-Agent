@@ -39,10 +39,10 @@ describe("brand", () => {
     expect(brand()).toEqual(DEFAULT_BRAND);
   });
 
-  it("names the product Iris, or a white-label brand file by its own name", () => {
+  it("names the product Iris Agent, or a white-label brand file by its own name", () => {
     applyBrand({ brand: DEFAULT_BRAND, source: "default", file: "" });
-    expect(productName()).toBe("Iris");
-    expect(brand().name).toBe("Iris");
+    expect(productName()).toBe("Iris Agent");
+    expect(brand().name).toBe("Iris Agent");
     applyBrand({ brand: { name: "Acme Bots" }, source: "file", file: "/data/brand.json" });
     expect(productName()).toBe("Acme Bots");
     applyBrand({ brand: DEFAULT_BRAND, source: "default", file: "" });

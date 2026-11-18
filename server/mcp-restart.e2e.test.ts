@@ -46,7 +46,7 @@ it("restart keeps the key and replaces the warm process, and so does turning the
     return { started, internal, done };
   };
   try {
-    bot = (await api("POST", "/api/bots", { name: "Iris" })).body.bot;
+    bot = (await api("POST", "/api/bots", { name: "Iris Agent" })).body.bot;
     const setup = await turn();
     const asked = await setup.internal("/api/internal/request-credential", { fromBotId: bot.id, fromThreadId: bot.threadId, label: "Mail key", reason: "To read the mail.", delivery: "ref" });
     expect(asked.status, JSON.stringify(asked.body)).toBe(201);
