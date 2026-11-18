@@ -1,7 +1,7 @@
 /** Made with Blob Studio. */
 import React, { useEffect, useId, useMemo, useRef } from 'react'
 
-import { MASCOT_BODIES } from "../../shared/mascot-bodies"
+import { DEFAULT_MASCOT_BODY, MASCOT_BODIES } from "../../shared/mascot-bodies"
 import { mascotLabel } from "@/lib/mascot-names"
 import {
   EXPRESSIONS,
@@ -42,8 +42,8 @@ export interface CursorSilhouette {
   anchor: { x: number; y: number; scale: number }
 }
 
-const { id: _cursorBodyId, ...cursorSilhouette } = MASCOT_BODIES.cursor;
-export const DEFAULT_SILHOUETTE: CursorSilhouette = cursorSilhouette;
+const { id: _defaultBodyId, ...defaultSilhouette } = MASCOT_BODIES[DEFAULT_MASCOT_BODY];
+export const DEFAULT_SILHOUETTE: CursorSilhouette = defaultSilhouette;
 
 export const DEFAULT_GRADIENT: [string, string, string] = ["#9FE6B5","#3FAE6E","#1C7A4C"]
 

@@ -26,7 +26,6 @@ import { freePortBlock, withFreeSignInPort } from "./testing/ports.ts";
 import { openSse } from "./testing/sse.ts";
 import { STARTER_COLORS } from "./bot-look.ts";
 import { createTeamManifest } from "./team-manifest.ts";
-import { DEFAULT_MASCOT_BODY } from "../shared/mascot-bodies.ts";
 import { readHandoffs } from "./testing/handoff-rows.ts";
 import { FILE_MAX_BYTES, IMAGE_MAX_BYTES } from "./attachments.ts";
 import { computerPrompt, SIGN_IN_PROMPT } from "./system-prompt.ts";
@@ -8018,15 +8017,16 @@ describe("harness HTTP API", () => {
     let id = "";
     try {
       await stream.until((frame) => frame.kind === "hello");
-      const bot = (await api("POST", "/api/bots", { name: "Scout", useDefaults: false, settings: { color: "purple", mascotBody: "star" } })).body.bot;
+      const bot = (await api("POST", "/api/bots", { name: "Scout", useDefaults: false, settings: { color: "purple", mascotBody: "spark" } })).body.bot;
       id = bot.id;
       expect(bot.messages[0].text).toBe("Hi Milind, I'm Scout. What would you like me to do?");
       const announced = await stream.until((frame) => frame.kind === "bot" && frame.bot?.id === id);
-      expect(announced.bot).toMatchObject({ color: "purple", mascotBody: "star" });
+      expect(announced.bot).toMatchObject({ color: "purple", mascotBody: "spark" });
       const plain = (await api("POST", "/api/bots", { name: "Wren", useDefaults: false })).body.bot;
       await api("DELETE", `/api/bots/${plain.id}`);
       const fresh = (await stream.until((frame) => frame.kind === "bot" && frame.bot?.id === plain.id)).bot;
-      expect(fresh.mascotBody).toBe(DEFAULT_MASCOT_BODY);
+      // No body is stored: the client deals one from the bot's id (shared/bot-body.ts bodyForBot).
+      expect(fresh.mascotBody).toBeUndefined();
       expect(STARTER_COLORS).toContain(fresh.color);
     } finally {
       stream.close();

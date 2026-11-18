@@ -250,7 +250,7 @@ describe("scopes", () => {
     // A Team Cloud member changes no team bot's look, which everyone sees; their own MausBot's they do.
     expect(clientBotPatchViolation({ color: "blue" }, false, true)).toBe("color");
     expect(clientBotPatchViolation({ avatarUrl: null }, false, true)).toBe("avatarUrl");
-    expect(clientBotPatchViolation({ mascotBody: "cursor" }, false, true)).toBe("mascotBody");
+    expect(clientBotPatchViolation({ mascotBody: "iris" }, false, true)).toBe("mascotBody");
     expect(clientBotPatchViolation({ unread: false, pinned: true }, false, true)).toBeNull();
     expect(clientBotPatchViolation({ color: "blue", name: "Mine" }, true, true)).toBeNull();
     expect(clientGroupPatchViolation({ name: "Ops", unread: false, turnTimeoutMinutes: 30 })).toBeNull();

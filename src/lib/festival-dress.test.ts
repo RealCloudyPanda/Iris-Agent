@@ -4,21 +4,21 @@ import { DRESS_UP_KEY, readDressUp, setDressUp, wornBody } from "./festival-dres
 
 describe("festival dress-up", () => {
   it("leaves bots alone unless dressed", () => {
-    expect(wornBody("star", "orange", null)).toBe("star");
+    expect(wornBody("spark", "orange", null)).toBe("spark");
     expect(wornBody(null, "orange", null)).toBeUndefined();
   });
 
   it("puts each colour in its costume for the festival it is dressed for", () => {
-    expect(wornBody("star", "orange", "halloween")).toBe("pumpkin");
+    expect(wornBody("spark", "orange", "halloween")).toBe("pumpkin");
     expect(wornBody(undefined, "purple", "halloween")).toBe("ghost");
-    expect(wornBody("star", "orange", "diwali")).toBe("laddu");
+    expect(wornBody("spark", "orange", "diwali")).toBe("laddu");
     expect(wornBody(undefined, "red", "diwali")).toBe("rocket");
   });
 
   it("leaves a silver bot in its own body while dressed", () => {
-    expect(wornBody("cursor", "silver", "diwali")).toBe("cursor");
+    expect(wornBody("iris", "silver", "diwali")).toBe("iris");
     expect(wornBody(undefined, "silver", "halloween")).toBeUndefined();
-    expect(wornBody("cursor", "chrome", "diwali")).toBe("cursor");
+    expect(wornBody("iris", "chrome", "diwali")).toBe("iris");
   });
 
   it("keeps a body from the same festival the bot already chose, and dresses over any other", () => {

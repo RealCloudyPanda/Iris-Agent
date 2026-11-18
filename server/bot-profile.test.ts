@@ -99,9 +99,9 @@ describe("parseBotProfilePatch (both modes)", () => {
 
 describe("mascotBody", () => {
   it("accepts a known body", () => {
-    expect(parseBotProfilePatch({ mascotBody: "blob" } as never, true)).toEqual({
+    expect(parseBotProfilePatch({ mascotBody: "pebble" } as never, true)).toEqual({
       ok: true,
-      patch: { mascotBody: "blob" },
+      patch: { mascotBody: "pebble" },
     });
   });
 
@@ -116,7 +116,7 @@ describe("mascotBody", () => {
     expect(parseBotProfilePatch({ mascotBody: "hexagram" } as never, true)).toEqual({
       ok: false,
       error:
-        "mascotBody must be cursor, blob, circle, squircle, capsule, drop, shield, hexagon, diamond, star, " +
+        "mascotBody must be iris, orb, pebble, hex, drop, petal, mochi, spark, " +
         "pumpkin, ghost, witch, bat, cat, skull, monster, mummy, vampire, spider, " +
         "rocket, anaar, chakri, sparkler, bomb, laddu, chakli, jalebi, katli, or karanji",
     });

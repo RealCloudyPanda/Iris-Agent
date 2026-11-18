@@ -58,7 +58,7 @@ const storedSchema = z.object({ version: z.literal(1), phones: z.array(z.object(
 type Stored = z.infer<typeof storedSchema>["phones"][number];
 
 /** The neutral look of a pushed activity for a bot the phone never drew. */
-export const FALLBACK_VISUAL: ActivityVisual = { color: "#7C5CFF", gradient: ["#B9A9FF", "#7C5CFF", "#48369A"], body: "cursor" };
+export const FALLBACK_VISUAL: ActivityVisual = { color: "#7C5CFF", gradient: ["#B9A9FF", "#7C5CFF", "#48369A"], body: "iris" };
 
 interface BotState {
   kind: ActivityKind;

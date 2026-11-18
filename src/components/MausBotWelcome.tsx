@@ -14,6 +14,7 @@ import { launchDialogShown, markLaunchDialog } from "@/lib/launch-dialogs";
 import { welcomeDue, welcomeFinishedThisLaunch, type WelcomeViewer } from "@/lib/onboarding";
 import { useStore, type Bot } from "@/state/store";
 import { BOT_PROFILE_LIMITS } from "../../shared/bot-profile";
+import { botBodyOf } from "../../shared/bot-body";
 import { BotAvatar } from "./Avatar";
 import { useAvatarImage } from "./avatar-editing";
 import { MausBotCustomize } from "./MausBotCustomize";
@@ -27,7 +28,7 @@ const EASE = "cubic-bezier(0.22, 1, 0.36, 1)";
 export const welcomeName = (name: string): string => name.trim().slice(0, BOT_PROFILE_LIMITS.name) || DEFAULT_BOT_NAME;
 
 export function draftOf(bot: Bot): WelcomeDraft {
-  return { name: bot.name, color: bot.color, mascotBody: bot.mascotBody ?? "cursor", avatarUrl: bot.avatarUrl ?? null,
+  return { name: bot.name, color: bot.color, mascotBody: botBodyOf(bot), avatarUrl: bot.avatarUrl ?? null,
     avatarCrop: bot.avatarCrop ?? "mascot", avatarZoom: bot.avatarZoom, avatarFocusX: bot.avatarFocusX, avatarFocusY: bot.avatarFocusY };
 }
 

@@ -24,7 +24,7 @@ describe("MausBot's rendered steel body", () => {
   });
 
   it("draws the picture over the whole avatar frame instead of the body and the face", () => {
-    const svg = (picture?: string) => renderToStaticMarkup(createElement(CursorAvatar, { size: 112, silhouette: MASCOT_BODIES.cursor, picture }));
+    const svg = (picture?: string) => renderToStaticMarkup(createElement(CursorAvatar, { size: 112, silhouette: MASCOT_BODIES.iris, picture }));
     const withPicture = svg("/steel/cursor-256.webp");
     expect(withPicture).toContain('<image href="/steel/cursor-256.webp" x="-15" y="-15" width="258.541" height="258.541" preserveAspectRatio="none"');
     expect(withPicture).not.toMatch(/fill="url\(#[^)]+-grad\)"/);
