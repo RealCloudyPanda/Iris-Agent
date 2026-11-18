@@ -7,7 +7,7 @@ import test from "node:test";
 import { installDesktopNotifications } from "./desktop-notifications.mjs";
 
 const CLOUD = "https://studio.example.com", COMPUTER = "http://127.0.0.1:8799";
-const NOTE = { title: "Scout resumed", body: "Results in", tag: "openmausbot:scout", botId: "scout", threadId: "work-thread" };
+const NOTE = { title: "Scout resumed", body: "Results in", tag: "openmausbot:scout", botId: "scout", threadId: "work-thread", kind: "done" };
 
 function world({ shown = CLOUD, supported = true, mayNotify = true, picture = async () => null, suppressed } = {}) {
   const banners = [], log = [];
@@ -134,6 +134,12 @@ test("while the Ask panel shows a thread's reply, that thread's banner is held b
   panelThread = null;
   assert.equal(await w.show(), true);
   assert.equal(w.banners.length, 2, "after the panel hides, banners are normal again");
+});
+
+test("the Ask panel never holds back approvals, questions, failures or spend warnings for its thread", async () => {
+  const w = world({ suppressed: () => true });
+  for (const kind of ["approval", "question", "turn-failed", "spend", "sign-in", undefined]) assert.equal(await w.show({ ...NOTE, kind }), true);
+  assert.equal(w.banners.length, 6);
 });
 
 test("refuses a note that names no thread to open", async () => {

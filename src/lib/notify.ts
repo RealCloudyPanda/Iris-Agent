@@ -61,6 +61,6 @@ export function showNotification(
   const desktop = window.ogb?.desktopNotifications;
   if (!desktop) return shownByPage();
   void desktop.show({
-    title, body, tag: options.tag, silent: options.silent === true, picture: options.icon, botId: frame.botId, threadId: frame.threadId,
+    title, body, tag: options.tag, silent: options.silent === true, picture: options.icon, botId: frame.botId, threadId: frame.threadId, kind: frame.kind,
   }).then((shown) => { if (!shown) shownByPage(); }, shownByPage);
 }

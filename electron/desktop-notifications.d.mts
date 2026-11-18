@@ -7,6 +7,8 @@ export interface DesktopNotificationNote {
   picture?: string;
   botId: string;
   threadId: string;
+  /** The notification's kind ("done", "approval", ...): only "done" may be held back while the Ask panel shows it. */
+  kind?: string;
 }
 
 export interface DesktopNotificationsBridge {

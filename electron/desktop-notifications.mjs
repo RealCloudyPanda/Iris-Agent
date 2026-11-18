@@ -66,10 +66,11 @@ export function installDesktopNotifications({ ipcMain, Notification, nativeImage
   ipcMain.handle("desktop-notifications:show", async (event, note) => {
     const origin = askingOrigin(event);
     if (!origin || !Notification.isSupported() || !note || typeof note !== "object") return false;
-    const { title, body, tag, silent, picture, botId, threadId } = note;
+    const { title, body, tag, silent, picture, botId, threadId, kind } = note;
     if (!text(title) || !ID.test(String(botId)) || !ID.test(String(threadId))) return false;
-    // Handled, so the page does not fall back to a banner of its own.
-    if (suppressed(threadId)) return true;
+    // Only the "finished" banner repeats what the panel shows; approvals, questions, failures and spend warnings
+    // always reach the person. Handled, so the page does not fall back to a banner of its own.
+    if (kind === "done" && suppressed(threadId)) return true;
     const key = `${origin}\n${text(tag) || threadId}`;
     const image = await pictureOf(origin, picture);
     const shown = new Notification({ title: text(title), body: text(body), silent: silent === true, ...(image ? { icon: image } : {}) });
