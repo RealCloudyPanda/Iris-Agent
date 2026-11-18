@@ -46,3 +46,10 @@ test("a slow, failing or missing helper, or another platform, gives null", async
   assert.equal(await createFrontmostWindow({ platform: "win32", execFile: exec.execFile, binary: () => "/helper" }).read(), null);
   assert.equal(exec.calls.length, 0);
 });
+
+test("the build falls back to the host arch only when the other slice cannot compile", async () => {
+  const { chooseArches } = await import("./build-frontmost-window.mjs");
+  assert.deepEqual(chooseArches(() => true, "arm64"), ["arm64", "x86_64"]);
+  assert.deepEqual(chooseArches(arch => arch === "arm64", "arm64"), ["arm64"]);
+  assert.throws(() => chooseArches(arch => arch === "x86_64", "arm64"), /arm64 slice did not compile/);
+});
