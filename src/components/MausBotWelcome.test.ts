@@ -23,8 +23,8 @@ describe("MausBot's first-launch welcome", () => {
   });
 
   it("Add saves the person's changes, pins MausBot and keeps it in the sidebar", () => {
-    expect(welcomePatch(maus, { ...draftOf(maus), name: " Jarvis ", color: "blue", mascotBody: "blob" }, true))
-      .toEqual({ name: "Jarvis", color: "blue", mascotBody: "blob", welcomed: true, sidebarHidden: false, pinned: true });
+    expect(welcomePatch(maus, { ...draftOf(maus), name: " Jarvis ", color: "blue", mascotBody: "pebble" }, true))
+      .toEqual({ name: "Jarvis", color: "blue", mascotBody: "pebble", welcomed: true, sidebarHidden: false, pinned: true });
   });
 
   it("Add with the panel never opened keeps the chrome-steel defaults", () => {
@@ -33,7 +33,7 @@ describe("MausBot's first-launch welcome", () => {
 
   it("Not now turns Show MausBot in the sidebar off, keeping what was changed, and nothing unchanged is sent", () => {
     expect(welcomePatch(maus, draftOf(maus), false)).toEqual({ welcomed: true, sidebarHidden: true });
-    expect(welcomePatch(maus, { ...draftOf(maus), mascotBody: "star" }, false)).toEqual({ mascotBody: "star", welcomed: true, sidebarHidden: true });
+    expect(welcomePatch(maus, { ...draftOf(maus), mascotBody: "spark" }, false)).toEqual({ mascotBody: "spark", welcomed: true, sidebarHidden: true });
   });
 
   it("saves an empty name as MausBot and caps a long one at the bot-name limit", () => {

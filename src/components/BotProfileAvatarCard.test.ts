@@ -63,15 +63,15 @@ describe("BotProfileAvatarCard body picker", () => {
   it("marks the current body pressed and the rest unpressed, defaulting to cursor", () => {
     const markup = renderCard(makeBot());
 
-    expect(markup).toContain(`aria-pressed="true" aria-label="Use the ${MASCOT_BODIES.cursor.name} body"`);
-    expect(markup).toContain(`aria-pressed="false" aria-label="Use the ${MASCOT_BODIES.star.name} body"`);
+    expect(markup).toContain(`aria-pressed="true" aria-label="Use the ${MASCOT_BODIES.iris.name} body"`);
+    expect(markup).toContain(`aria-pressed="false" aria-label="Use the ${MASCOT_BODIES.spark.name} body"`);
   });
 
   it("reflects an explicitly chosen body", () => {
-    const markup = renderCard(makeBot({ mascotBody: "star" }));
+    const markup = renderCard(makeBot({ mascotBody: "spark" }));
 
-    expect(markup).toContain(`aria-pressed="true" aria-label="Use the ${MASCOT_BODIES.star.name} body"`);
-    expect(markup).toContain(`aria-pressed="false" aria-label="Use the ${MASCOT_BODIES.cursor.name} body"`);
+    expect(markup).toContain(`aria-pressed="true" aria-label="Use the ${MASCOT_BODIES.spark.name} body"`);
+    expect(markup).toContain(`aria-pressed="false" aria-label="Use the ${MASCOT_BODIES.iris.name} body"`);
   });
 
   it("offers zoom and drag framing for a custom image", () => {
@@ -95,7 +95,7 @@ describe("BotProfileAvatarCard body picker", () => {
     const markup = renderCard(makeBot({ avatarCrop: "circle" }));
 
     expect(markup).not.toContain(">Body<");
-    expect(markup).not.toContain(`aria-label="Use the ${MASCOT_BODIES.cursor.name} body"`);
+    expect(markup).not.toContain(`aria-label="Use the ${MASCOT_BODIES.iris.name} body"`);
   });
 
   it("hides the body picker for every flat crop, not just circle", () => {

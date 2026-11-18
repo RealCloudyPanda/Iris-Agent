@@ -14,7 +14,7 @@ import { CHROME_EYES, CHROME_GRADIENT, MAUS_COLORS, type MausColor, type MausMot
 import { CursorAvatar, type CursorAvatarHandle } from "./CursorAvatar";
 import { avatarCropRadius, botAvatarProfile, clampAvatarFocus, clampAvatarZoom, mascotFaceInk, type BotAvatarCrop, type MascotFaceColor } from "../../shared/bot-avatar";
 import { MASCOT_BODIES, botMascotBody } from "../../shared/mascot-bodies";
-import { isCarvedBody, type BotBodyId } from "../../shared/bot-body";
+import { botBodyOf, isCarvedBody, type BotBodyId } from "../../shared/bot-body";
 import { useFestivalDress, wornBody } from "@/lib/festival-dress";
 import { t } from "@/lib/i18n";
 import { CarvedAvatar } from "./CarvedAvatar";
@@ -224,6 +224,9 @@ export const MausAvatar = memo(forwardRef(MausAvatarComponent));
 export type BotAvatarProps = Omit<MausAvatarProps, "color" | "gradient"> & {
   readable?: boolean;
   bot: {
+    /** Picks the body a bot that never chose one wears. */
+    id?: string;
+    defaultBot?: unknown;
     name?: string;
     color: MausColor;
     avatarUrl?: string | null;
@@ -267,7 +270,7 @@ export function BotAvatar({ bot, size = 44, label, readable = false, ...mascotPr
   if (outcome !== "flatImage") {
     return (
       <MausAvatar
-        bodyId={wornBody(bot.mascotBody, bot.color, festival)}
+        bodyId={wornBody(botBodyOf(bot), bot.color, festival)}
         {...mascotProps}
         color={bot.color}
         faceColor={bot.mascotFaceColor}

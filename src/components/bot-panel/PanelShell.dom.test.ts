@@ -394,7 +394,7 @@ describe("focus around the hero", () => {
 });
 
 describe("one body for every bot", () => {
-  const roundBot: Bot = { ...bot, mascotBody: "circle" };
+  const roundBot: Bot = { ...bot, mascotBody: "orb" };
   const everywhere = () => host.querySelector("[data-avatar-body-everywhere]");
   const openEditor = async (shown: Bot) => {
     flushSync(() => root.render(createElement("aside", { role: "dialog" }, createElement(BotPanel, { bot: shown, derived, linkedSection: null, onClose }))));
@@ -404,13 +404,13 @@ describe("one body for every bot", () => {
   };
 
   it("gives this bot's body to every other bot that wears another one", async () => {
-    fixture.bots = [roundBot, { ...bot, id: "ada", mascotBody: "cursor" }, { ...bot, id: "bob" }, { ...bot, id: "cara", mascotBody: "circle" }];
+    fixture.bots = [roundBot, { ...bot, id: "ada", mascotBody: "iris" }, { ...bot, id: "bob" }, { ...bot, id: "cara", mascotBody: "orb" }];
     await openEditor(roundBot);
     expect(everywhere()?.textContent).toBe("Give this body to the other bots (2)");
     click(everywhere());
     expect(fixture.dispatch.mock.calls.map(([action]) => action)).toEqual([
-      { type: "updateBot", botId: "ada", patch: { mascotBody: "circle" } },
-      { type: "updateBot", botId: "bob", patch: { mascotBody: "circle" } },
+      { type: "updateBot", botId: "ada", patch: { mascotBody: "orb" } },
+      { type: "updateBot", botId: "bob", patch: { mascotBody: "orb" } },
     ]);
   });
 
@@ -430,7 +430,7 @@ describe("one body for every bot", () => {
   });
 
   it("is not offered once every bot wears this body, or while the bot shows a picture", async () => {
-    fixture.bots = [roundBot, { ...bot, id: "cara", mascotBody: "circle" }];
+    fixture.bots = [roundBot, { ...bot, id: "cara", mascotBody: "orb" }];
     await openEditor(roundBot);
     expect(everywhere()).toBeNull();
     flushSync(() => root.unmount());

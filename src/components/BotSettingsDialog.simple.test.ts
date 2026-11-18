@@ -518,7 +518,7 @@ describe("the avatar editor", () => {
     expect(has(rendered, "data-avatar-face", "idle")).toBe(false);
     expect(find(rendered, "aria-label", "Use the Cursor body").props["aria-pressed"]).toBe(true);
     click(find(rendered, "aria-label", "Use the Blob body"));
-    expect(patch).toHaveBeenLastCalledWith({ mascotBody: "blob" });
+    expect(patch).toHaveBeenLastCalledWith({ mascotBody: "pebble" });
     click(find(rendered, "aria-label", "Use blue mascot color"));
     expect(patch).toHaveBeenLastCalledWith({ color: "blue" });
     expect(find(rendered, "aria-label", "Use silver mascot color").props.title).toBe("Silver");
@@ -561,12 +561,12 @@ describe("the avatar editor", () => {
     const bot = makeBot({ avatarUrl: "/api/attachments/cat.webp", avatarCrop: "circle" });
     click(find(editor(bot), "data-avatar-tab", "bot"));
     click(find(editor(bot), "aria-label", "Use the Star body"));
-    expect(patch).toHaveBeenLastCalledWith({ mascotBody: "star", avatarCrop: "mascot" });
+    expect(patch).toHaveBeenLastCalledWith({ mascotBody: "spark", avatarCrop: "mascot" });
   });
 
   it("resets the mascot as the Advanced card does", () => {
     click(find(editor(makeBot()), "data-avatar-reset"));
-    expect(patch).toHaveBeenLastCalledWith({ avatarCrop: "mascot", color: "green", mascotExpression: null, mascotBody: "cursor", mascotFaceColor: null });
+    expect(patch).toHaveBeenLastCalledWith({ avatarCrop: "mascot", color: "green", mascotExpression: null, mascotBody: "iris", mascotFaceColor: null });
   });
 
   it("edits facial feature color without changing body color or expression", () => {
