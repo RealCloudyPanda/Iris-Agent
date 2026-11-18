@@ -39,6 +39,8 @@ files:
   - "!electron/resources/speech-helper.swift"
   - "!electron/resources/speech-helper-Info.plist"
   - "!electron/resources/OpenMausBot Speech.app/**"
+  - "!electron/frontmost-window.swift"
+  - "!electron/resources/frontmost-window"
   # The Teach a skill recorder is gone, but a machine that once ran
   # `pnpm build:recorder` may still hold its helper build; never ship it.
   - "!electron/resources/recorder-helper"
@@ -115,6 +117,9 @@ mac:
   extraResources:
     - from: electron/resources/OpenMausBot Speech.app
       to: OpenMausBot Speech.app
+    # the Ask panel's previous-window helper (D24)
+    - from: electron/resources/frontmost-window
+      to: frontmost-window
     # CUA must live outside ASAR. prepare-cua stages the signed executable and
     # a self-contained JS/native SDK bundle selected for macOS arm64.
     # ${arch} resolves per built arch — each bundle carries its own natives

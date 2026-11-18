@@ -34,7 +34,7 @@ label{display:flex;gap:8px;align-items:center;color:var(--color-ink-secondary)}i
 #why{color:var(--color-ink-secondary);font-size:12px;max-width:120px}
 #picker{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;overflow:auto;max-height:150px}
 #picker button{display:flex;flex-direction:column;gap:4px;padding:4px;text-align:start;border-radius:8px}#picker img{width:100%;height:70px;object-fit:contain}
-#picker span{font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%}
+#picker button[aria-selected=true]{border-color:var(--color-focus)}#picker span{font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%}
 #chip{display:flex;gap:8px;align-items:center}#chip img{height:44px;border-radius:8px;border:1px solid var(--color-hairline)}
 #status{color:var(--color-ink-secondary);font-size:12px;min-height:16px}.error#status{color:var(--color-danger)}.needs-you#status{color:var(--color-warning)}
 #status:empty::before{content:"Choose a bot, then ask about your screen."}
@@ -69,9 +69,9 @@ function setStatus(state,error){status.className=state||"";status.textContent=st
 async function toggled(){$("perm").hidden=true;picker.hidden=true;if(!inc.checked){pick++;captured=false;chip.hidden=true;await api.clearCapture();return}if(!captured)await showPicker()}
 async function showPicker(){const r=await api.pickWindows();if(!inc.checked)return;if(r?.error==="screen-permission"){$("perm").hidden=false;return}
  if(!r||r.error){setStatus("error","failed");return}
- picker.replaceChildren(...r.windows.map(w=>{const b=document.createElement("button");b.type="button";b.setAttribute("role","option");b.setAttribute("aria-label",w.name||"Window");
-  const i=document.createElement("img");i.src=w.thumbnail;i.alt="";const s=document.createElement("span");s.textContent=w.name||"Untitled window";b.append(i,s);
-  b.addEventListener("click",()=>choose(w.id));return b}));picker.hidden=false;picker.querySelector("button")?.focus()}
+ picker.replaceChildren(...r.windows.map(w=>{const b=document.createElement("button");b.type="button";b.setAttribute("role","option");const t=(w.app?w.app+" · ":"")+(w.name||"Untitled window");b.setAttribute("aria-label",t);
+  if(w.preselected)b.setAttribute("aria-selected","true");const i=document.createElement("img");i.src=w.thumbnail;i.alt="";const s=document.createElement("span");s.textContent=t;b.append(i,s);
+  b.addEventListener("click",()=>choose(w.id));return b}));picker.hidden=false;(picker.querySelector('[aria-selected="true"]')||picker.querySelector("button"))?.focus()}
 async function choose(id){const mine=++pick;const r=await api.chooseWindow(id);if(mine!==pick||!inc.checked||r?.error==="stale")return;if(!r||r.error){setStatus("error","failed");return}$("shot").src=r.preview;captured=true;chip.hidden=false;picker.hidden=true;q.focus()}
 async function send(){const text=q.value.trim();if(!text||busy||!bot.value)return;reply.textContent="";pick++;const r=await api.send({botId:bot.value,text});
  if(!r?.ok){setStatus("error",r?.error||"failed");return}q.value="";captured=false;chip.hidden=true;inc.checked=false;picker.hidden=true}
@@ -123,13 +123,16 @@ export function createAskPanel({ BrowserWindow, screen, onHide = () => {} }) {
     win.show();
     win.focus();
   };
-  const hide = () => {
+  /** `onHide({ returnFocus })`: true when the panel had focus, so focus may go back to the previous app (D31). */
+  const hide = ({ returnFocus = true } = {}) => {
+    const focused = Boolean(live() && win.isVisible() && win.isFocused());
     if (live() && win.isVisible()) win.hide();
-    onHide();
+    onHide({ returnFocus: returnFocus && focused });
   };
   return {
     owns: contents => Boolean(live() && contents === win.webContents),
     visible,
+    focused: () => Boolean(visible() && win.isFocused()),
     show,
     hide,
     toggle: () => (visible() && win.isFocused() ? hide() : show()),

@@ -34,6 +34,12 @@ describe("buildApplicationMenu", () => {
       }),
     );
 
+  it("puts the Ask item in the macOS app menu only when there is one", () => {
+    const ask = { id: "ask-panel", label: "Ask…", click: vi.fn() };
+    expect(build("darwin", { ask })[0].submenu.find(entry => entry.id === "ask-panel")).toBe(ask);
+    expect(build("darwin")[0].submenu.some(entry => entry.id === "ask-panel")).toBe(false);
+  });
+
   it.each(["darwin", "linux", "win32"])("lists a saved local environment by its folder, so switching servers never fails on %s", platform => {
     const onSwitch = vi.fn();
     const local = { id: "e1", kind: "local", name: "Work", dataDir: "/Users/me/.openmausbot-work" };

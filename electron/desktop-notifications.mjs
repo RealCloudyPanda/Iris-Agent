@@ -22,11 +22,13 @@ const originOf = (url) => { try { return new URL(url).origin; } catch { return n
  *   mayNotify: (contents: unknown, url: string) => boolean,
  *   reveal: () => void,
  *   openPlace: (origin: string) => unknown,
- *   now?: () => number }} deps
+ *   now?: () => number,
+ *   suppressed?: (threadId: string) => boolean }} deps
  * `window`: the main window, if any. `mayNotify`: the same rule that lets its page use `new Notification`. `reveal`: raises
- * the window. `openPlace`: main's own switch to the place at an origin.
+ * the window. `openPlace`: main's own switch to the place at an origin. `suppressed`: the Ask panel is showing that
+ * thread's reply, so its banner would repeat what is on screen (D36).
  */
-export function installDesktopNotifications({ ipcMain, Notification, nativeImage, fetch, window, mayNotify, reveal, openPlace, now = Date.now }) {
+export function installDesktopNotifications({ ipcMain, Notification, nativeImage, fetch, window, mayNotify, reveal, openPlace, now = Date.now, suppressed = () => false }) {
   // Electron drops a notification's handlers once nothing holds it, so each is held until it is replaced or dismissed.
   const live = new Map();
   let waiting = null;
@@ -64,8 +66,11 @@ export function installDesktopNotifications({ ipcMain, Notification, nativeImage
   ipcMain.handle("desktop-notifications:show", async (event, note) => {
     const origin = askingOrigin(event);
     if (!origin || !Notification.isSupported() || !note || typeof note !== "object") return false;
-    const { title, body, tag, silent, picture, botId, threadId } = note;
+    const { title, body, tag, silent, picture, botId, threadId, kind } = note;
     if (!text(title) || !ID.test(String(botId)) || !ID.test(String(threadId))) return false;
+    // Only the "finished" banner repeats what the panel shows; approvals, questions, failures and spend warnings
+    // always reach the person. Handled, so the page does not fall back to a banner of its own.
+    if (kind === "done" && suppressed(threadId)) return true;
     const key = `${origin}\n${text(tag) || threadId}`;
     const image = await pictureOf(origin, picture);
     const shown = new Notification({ title: text(title), body: text(body), silent: silent === true, ...(image ? { icon: image } : {}) });

@@ -267,3 +267,26 @@ test("only the latest of two overlapping captures is kept", async () => {
   assert.deepEqual(await second, { preview: "data:image/png;base64,LL" });
   assert.equal(h.ask.held(), true);
 });
+
+test("the displayed thread is kept after the reply and replaced when the next ask starts (D36)", async () => {
+  const h = harness();
+  assert.equal(h.ask.showingThread(), null);
+  const sent = h.ask.send({ botId: "codex-bot", text: "hi" });
+  await h.answer("id-1");
+  await sent;
+  assert.equal(h.ask.showingThread(), "thread-1");
+  h.ask.clearCapture();
+  assert.equal(h.ask.showingThread(), "thread-1", "hiding the panel does not forget it");
+  const next = h.ask.send({ botId: "nobody", text: "again" });
+  assert.equal(h.ask.showingThread(), null, "a new ask replaces the displayed reply");
+  await next;
+});
+
+test("pickWindows adds app names and preselects the previous window", async () => {
+  const h = harness();
+  const ask = createAsk({ request: h.request, prefs: createAskPrefs(h.store), serverKey: () => "srv", capture: h.capture, push: () => {},
+    previousWindow: () => ({ pid: 5, appName: "Editor", windowNumber: 1, title: null }), windowOwners: async () => [{ windowNumber: 1, appName: "Editor" }] });
+  assert.deepEqual(await ask.pickWindows(), { windows: [{ id: "window:1:0", name: "Editor", thumbnail: "data:image/png;base64,AA", app: "Editor", preselected: true }] });
+  h.capture.list = async () => ({ error: "screen-permission" });
+  assert.deepEqual(await ask.pickWindows(), { error: "screen-permission" });
+});

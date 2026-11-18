@@ -180,7 +180,7 @@ describe("on the desktop app, where main shows the banner so its click outlives 
     showNotification(frame, vi.fn(), "/api/attachments/face.png");
     await flush();
     expect(show).toHaveBeenCalledWith({
-      title: frame.title, body: frame.body, tag: "openmausbot:bot-1", silent: false, picture: "/api/attachments/face.png", botId: "bot-1", threadId: "thread-1",
+      title: frame.title, body: frame.body, tag: "openmausbot:bot-1", silent: false, picture: "/api/attachments/face.png", botId: "bot-1", threadId: "thread-1", kind: "done",
     });
     expect(notices).toHaveLength(0);
   });

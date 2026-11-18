@@ -7,9 +7,9 @@ import test from "node:test";
 import { installDesktopNotifications } from "./desktop-notifications.mjs";
 
 const CLOUD = "https://studio.example.com", COMPUTER = "http://127.0.0.1:8799";
-const NOTE = { title: "Scout resumed", body: "Results in", tag: "openmausbot:scout", botId: "scout", threadId: "work-thread" };
+const NOTE = { title: "Scout resumed", body: "Results in", tag: "openmausbot:scout", botId: "scout", threadId: "work-thread", kind: "done" };
 
-function world({ shown = CLOUD, supported = true, mayNotify = true, picture = async () => null } = {}) {
+function world({ shown = CLOUD, supported = true, mayNotify = true, picture = async () => null, suppressed } = {}) {
   const banners = [], log = [];
   class Banner extends EventEmitter {
     closed = false;
@@ -32,7 +32,7 @@ function world({ shown = CLOUD, supported = true, mayNotify = true, picture = as
     nativeImage: { createFromBuffer: (buffer) => ({ isEmpty: () => buffer.length === 0, bytes: buffer.length }) },
     fetch: async (url) => { asked.push(url); const body = await picture(url); return { ok: body !== null, arrayBuffer: async () => new TextEncoder().encode(body ?? "").buffer }; },
     window: () => ({ isDestroyed: () => false, webContents }), mayNotify: () => mayNotify,
-    reveal: () => log.push("reveal"), openPlace: (origin) => log.push(`place ${origin}`), now: () => at.now,
+    reveal: () => log.push("reveal"), openPlace: (origin) => log.push(`place ${origin}`), now: () => at.now, suppressed,
   });
   const fromPage = { sender: webContents, senderFrame: mainFrame };
   return { ...installed, at, banners, log, asked, fromPage, webContents, show: (note = NOTE, event = fromPage) => handler(event, note) };
@@ -122,6 +122,24 @@ test("with no system support the page is told, and shows its own", async () => {
   const w = world({ supported: false });
   assert.equal(await w.show(), false);
   assert.equal(w.banners.length, 0);
+});
+
+test("while the Ask panel shows a thread's reply, that thread's banner is held back and the page shows none either", async () => {
+  let panelThread = "work-thread";
+  const w = world({ suppressed: threadId => threadId === panelThread });
+  assert.equal(await w.show(), true, "handled, so the page does not show its own");
+  assert.equal(w.banners.length, 0);
+  assert.equal(await w.show({ ...NOTE, threadId: "other-thread" }), true);
+  assert.equal(w.banners.length, 1, "another thread's banner still shows");
+  panelThread = null;
+  assert.equal(await w.show(), true);
+  assert.equal(w.banners.length, 2, "after the panel hides, banners are normal again");
+});
+
+test("the Ask panel never holds back approvals, questions, failures or spend warnings for its thread", async () => {
+  const w = world({ suppressed: () => true });
+  for (const kind of ["approval", "question", "turn-failed", "spend", "sign-in", undefined]) assert.equal(await w.show({ ...NOTE, kind }), true);
+  assert.equal(w.banners.length, 6);
 });
 
 test("refuses a note that names no thread to open", async () => {
