@@ -4,7 +4,7 @@ import { DRESS_UP_KEY, readDressUp, setDressUp, wornBody } from "./festival-dres
 
 describe("festival dress-up", () => {
   it("leaves bots alone unless dressed", () => {
-    expect(wornBody("spark", "orange", null)).toBe("star");
+    expect(wornBody("spark", "orange", null)).toBe("spark");
     expect(wornBody(null, "orange", null)).toBeUndefined();
   });
 
