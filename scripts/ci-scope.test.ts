@@ -541,7 +541,7 @@ describe("the repository's import graph", () => {
     const frameSmoke = readFileSync(join(ROOT, "scripts/smoke-app-frames.mjs"), "utf8");
     expect(frameSmoke).toContain('resolveDir: join(ROOT, "src/components/app")');
     expect(frameSmoke).toContain("from \\\"./app-frame-host.ts\\\"");
-    const runtime = ["server", "shared", "packages", "electron", "companion", "enterprise", "evals", "cloudflare"]
+    const runtime = ["server", "shared", "packages", "electron", "companion", "evals", "cloudflare"]
       .flatMap((directory) => codeFiles(join(ROOT, directory)))
       .filter((file) => !TEST_FILE.test(relative(ROOT, file).split("\\").join("/")));
     expect(runtime.length).toBeGreaterThan(500);
@@ -552,7 +552,7 @@ describe("the repository's import graph", () => {
   });
 
   it("runs every test outside the renderer that reads a translation other than English with the locale tests", () => {
-    const files = ["server", "shared", "packages", "electron", "companion", "enterprise", "evals", "scripts", "cloudflare"]
+    const files = ["server", "shared", "packages", "electron", "companion", "evals", "scripts", "cloudflare"]
       .flatMap((directory) => codeFiles(join(ROOT, directory)))
       // The selection names the catalogs without reading them.
       .filter((file) => !/[/\\]ci-scope\.(?:mjs|test\.ts)$/.test(file));
@@ -573,7 +573,7 @@ describe("the repository's import graph", () => {
   });
 
   it("never loads a test file from other code, so a test under scripts/ affects only the jobs that run it", () => {
-    const code = ["server", "shared", "packages", "electron", "companion", "enterprise", "evals", "scripts", "src", "cloudflare"]
+    const code = ["server", "shared", "packages", "electron", "companion", "evals", "scripts", "src", "cloudflare"]
       .flatMap((directory) => codeFiles(join(ROOT, directory)));
     const loaders = code.filter((file) => imports(file).some((target) => /\.test\.[cm]?[jt]sx?$/.test(target)));
     expect(loaders.map((file) => relative(ROOT, file))).toEqual([]);
