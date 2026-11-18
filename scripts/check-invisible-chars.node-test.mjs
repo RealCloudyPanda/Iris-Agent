@@ -37,6 +37,10 @@ function run(dir, ...args) {
 
 test("names each invisible or bidi codepoint, including tag characters", () => {
   assert.deepEqual(invisibleIn(`a${ZWSP}b${RLO}c${TAG_A}${SOFT_HYPHEN}`), ["U+200B", "U+202E", "U+E0041", "U+00AD"]);
+  const more = [0x034f, 0x206a, 0x206b, 0x206c, 0x206d, 0x206e, 0x206f, 0x2028, 0x2029];
+  assert.deepEqual(invisibleIn(more.map((point) => String.fromCodePoint(point)).join("x")),
+    ["U+034F", "U+206A", "U+206B", "U+206C", "U+206D", "U+206E", "U+206F", "U+2028", "U+2029"]);
+  assert.deepEqual(invisibleIn("plain ascii, émoji 🙂 and ‘quotes’"), []);
 });
 
 test("reads added lines with their new-file line numbers", () => {
