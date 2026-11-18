@@ -93,7 +93,7 @@ export function discoveryDirectory(): Promise<string> {
         rmSync(directory, { recursive: true, force: true });
         mkdirSync(directory, { recursive: true });
         await runGit(directory, ["init", "-q"]);
-        await runGit(directory, ["commit", "-q", "--allow-empty", "--no-verify", "-m", "OpenMaus model discovery"]);
+        await runGit(directory, ["commit", "-q", "--allow-empty", "--no-verify", "-m", "Iris Agent model discovery"]);
         writeFileSync(marker, "OpenCode files this folder's sessions under its own project.\n");
       } catch {}
     }
