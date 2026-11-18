@@ -96,8 +96,8 @@ Status legend: **Accepted** (user decided) · **Amended** (accepted, then change
 
 ## Requirements status
 
-- **Done:** Milestone 1 (text and window ask from the panel), Milestone 2 (previous-window detection, focus return,
-  Ask menu items, notification suppression), Milestone 3 (Iris Agent naming and icons). D01–D45 resolved
+- **Done:** Milestones 1–3, merged on `companion` (`m1/ask-panel`, `m2/rebrand`, `m2/window-focus`, then the
+  Iris Agent naming). D01–D45 resolved
   (D29's `enterprise/` deletion is done).
 - **Done on `m4/docs`:** architecture, protocols, privacy, test plan, demo script, CI and repo-map docs;
   `scripts/bench-ask-idle.mjs`; D41 and D42 answered from code.
