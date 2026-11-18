@@ -481,7 +481,7 @@ test("through the home folder, keys, passwords, sign-ins and git secrets stay pr
 test("a Cloud's bot needing apps and screen on a Mac that lacks only macOS's permissions asks macOS for them, and says how to allow them", async t => {
   const homes = { [HOME]: cloudHome() };
   const asked = [];
-  const missing = { mode: "unavailable", reason: "Error: Accessibility and Screen Recording required; grant access in System Settings and restart OpenMausBot" };
+  const missing = { mode: "unavailable", reason: "Error: Accessibility and Screen Recording required; grant access in System Settings and restart Iris Agent" };
   const mac = await computer(t, { homes, places: [myCloud], screen: () => true, cuaConnection: async () => missing, askForScreen: connection => asked.push(connection) });
   mac.sharing.start();
   await until(() => homes[HOME].connects.length === 1, "lending to start");

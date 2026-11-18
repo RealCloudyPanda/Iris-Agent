@@ -51,8 +51,8 @@ test("the box's words and timings are fixed", () => {
     busy: "Voice is in use in Iris Agent",
     serverDown: "Open Iris Agent to talk",
     starting: "Iris Agent is still starting. Try again in a moment.",
-    noMausbot: "Set up MausBot first, then try again.",
-    moved: "MausBot lives on My Cloud now — talk to it there",
+    noMausbot: "Set up Iris first, then try again.",
+    moved: "Iris lives on My Cloud now — talk to it there",
     permission: "Talking needs Microphone + Speech Recognition access — System Settings → Privacy & Security.",
     dictationOff: "Turn on Dictation in System Settings → Keyboard, then try again.",
     unavailable: "Talking couldn't start. Try again.",
@@ -179,12 +179,12 @@ test("permission and setup problems say what to fix, in the composer's words: on
   }
 });
 
-test("a server that can't take asks says why and stops listening: down, still starting, no MausBot, or moved to My Cloud", async () => {
+test("a server that can't take asks says why and stops listening: down, still starting, no Iris Agent, or moved to My Cloud", async () => {
   const notices = [
     ["server-down", "Open Iris Agent to talk", "native.talk.openMausBot"],
     ["starting", TALK_TEXT.starting, "native.talk.starting"],
     ["no-mausbot", TALK_TEXT.noMausbot, "native.talk.setUpFirst"],
-    ["moved", "MausBot lives on My Cloud now — talk to it there", "native.talk.movedToCloud"],
+    ["moved", "Iris lives on My Cloud now — talk to it there", "native.talk.movedToCloud"],
   ];
   for (const [code, text, textCode] of notices) {
     const h = harness({ prepare: async () => { throw new TalkServerError(code); } });
@@ -317,7 +317,7 @@ test("replaced while listening closes the box and nothing is sent", async () => 
   assert.equal(h.starts.length, 2);
 });
 
-test("clicking the box opens the chat; before the chat is known it only brings MausBot forward", async () => {
+test("clicking the box opens the chat; before the chat is known it only brings Iris Agent forward", async () => {
   const idle = harness(); idle.session.open();
   assert.deepEqual(idle.opened, []); assert.equal(idle.closed, 0);
 

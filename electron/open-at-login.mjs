@@ -7,7 +7,7 @@ import path from "node:path";
 export const HIDDEN_ARG = "--omb-hidden";
 const MARK = "X-OpenMausBot-Lending=true";
 /** Windows keeps one Run entry per name, so the person's own entry has a name apart from lending's (the app's). */
-const CHOSEN_NAME = "Iris Agent at login";
+const CHOSEN_NAME = "OpenMausBot at login";
 
 /** Desktop Entry Exec quoting: the path in double quotes, with ", `, $ and \ escaped. */
 const quoted = (value) => `"${value.replace(/["`$\\]/g, (match) => `\\${match}`)}"`;
