@@ -66,8 +66,8 @@ Status legend: **Accepted** (user decided) · **Amended** (accepted, then change
 
 | ID | Decision | Status |
 |---|---|---|
-| D41 | Screenshot retention is documented as it is, not as we would like it: a sent screenshot is stored as `attachments/<uuid>.png` in the data folder, as base64 inside Codex's own session log (`providers/codex-own/<hash>/codex/sessions/…/rollout-*.jsonl`), and as text the model read from it in the conversation event log, the native log, the bot's daily memory log and the memory journal; it is also sent to OpenAI. M1 adds a test task that deletes a conversation and lists which of these copies remain. A cleanup step is decided only if copies survive | Accepted |
-| D42 | Spike, before M1 ends, whether the "Quick asks" conversation can be excluded from bot memory (daily log, journal) with existing settings; if it cannot, record that and decide then | Accepted |
+| D41 | Screenshot retention is documented as it is, not as we would like it: a sent screenshot is stored as `attachments/<uuid>.png` in the data folder, as base64 inside Codex's own session log (`providers/codex-own/<hash>/codex/sessions/…/rollout-*.jsonl`), and as text the model read from it in the conversation event log, the native log, the bot's daily memory log and the memory journal; it is also sent to OpenAI. M1 adds a test task that deletes a conversation and lists which of these copies remain. A cleanup step is decided only if copies survive | Accepted. **Code read (not run):** deleting the conversation removes its messages, events and native logs, the attachment (unless still referenced) and the Codex rollout (unless another conversation resumes it); the daily memory log and memory journal stay until the bot is deleted. Evidence in [PRIVACY_AND_SECURITY.md](PRIVACY_AND_SECURITY.md#d41-what-deleting-the-conversation-removes). Live deletion test pending; memory copies need a decision |
+| D42 | Spike, before M1 ends, whether the "Quick asks" conversation can be excluded from bot memory (daily log, journal) with existing settings; if it cannot, record that and decide then | Accepted. **Spike done (code read):** no per-conversation setting exists; only the per-bot `memoryEnabled` (`server/routes/bot-patch.ts:320`, enforced at `server/index.ts:12978`). Option with existing settings: a dedicated Ask bot with memory off. Needs a decision |
 | D43 | Dev isolation as implemented (amends Evidence 2): when `!app.isPackaged`, Electron uses `<appData>/OpenMausBot-Dev` for userData (so its own single-instance lock and files) and its own logs folder, set before any `getPath("userData")` and before `requestSingleInstanceLock()`; the server data folder defaults to `~/.openmausbot-dev` unless `OMB_DATA_DIR` is set, both for the server Electron spawns and for `pnpm dev:server` (`server/dev-server.ts`). Packaged builds are unchanged (`electron/dev-isolation.mjs`, `electron/dev-isolation-boot.mjs`). Not yet verified by launching a dev window | Accepted |
 | D44 | Upstream workflows (self-hosted `boat-*` runners, release secrets) removed; replaced by one `.github/workflows/ask-panel-ci.yml` on GitHub-hosted `macos-latest`: lint, typecheck, `test:electron`, the focused Vitest files of SPIKES.md §A and the invisible-character check; `contents: read`, no secrets, no provider calls | Accepted (not yet run on GitHub) |
 | D45 | Milestone 1 order: groundwork → text ask from main process → panel window → picker / capture / preview → image send → tests | Accepted |
@@ -96,10 +96,16 @@ Status legend: **Accepted** (user decided) · **Amended** (accepted, then change
 
 ## Requirements status
 
-- **Resolved:** D01–D45 (D29's `enterprise/` deletion is done).
-- **Open tasks from Round 5:** the conversation-deletion retention test (D41); the Quick-asks memory-exclusion spike
-  (D42); first launch of a dev window to confirm D43; first GitHub run of `ask-panel-ci.yml` (D44).
-- **Unresolved:** error-state wording; demo script.
+- **Done:** Milestone 1 (text and window ask from the panel), Milestone 2 (previous-window detection, focus return,
+  Ask menu items, notification suppression), Milestone 3 (Iris Agent naming and icons). D01–D45 resolved
+  (D29's `enterprise/` deletion is done).
+- **Done on `m4/docs`:** architecture, protocols, privacy, test plan, demo script, CI and repo-map docs;
+  `scripts/bench-ask-idle.mjs`; D41 and D42 answered from code.
+- **Pending:** packaging (`pnpm package:mac`) and a packaged-build auth check; the D37 idle benchmark against stock;
+  the manual macOS checklist in [TEST_PLAN.md](TEST_PLAN.md); a live conversation-deletion test (D41); a decision on
+  memory copies and the memory-off Ask bot (D41, D42); first launch of a dev window (D43); first GitHub run of
+  `ask-panel-ci.yml` (D44).
+- **Unresolved:** dedicated error wording for expired sign-in and rate limits (today both show `failed`).
 - **Deferred:** Claude engine, native speech, voice input, Windows, Linux, per-app exclusions.
 - **Impossible:** none found. Claude stays deferred by choice: Anthropic's compliance page does not prevent a user
   signing in to the unmodified Claude Code binary, but D13 puts Codex first.
