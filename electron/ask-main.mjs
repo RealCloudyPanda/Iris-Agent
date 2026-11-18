@@ -145,9 +145,8 @@ export function createAsk({ request, prefs, serverKey, capture, push, makeId = r
     busy: () => asking !== null,
     openPermissionSettings: () => capture.openPermissionSettings(),
     lastChat: () => lastChat,
-    /** The thread whose reply the panel shows, until the panel hides (D36). */
+    /** The thread whose reply the panel displays (D36); kept across hide and reopen, replaced by the next ask. */
     showingThread: () => showing,
-    hidden() { showing = null; },
     /** Resolves when the ask ends; a second ask while one runs is refused. The capture is taken (and dropped) now. */
     async send(args) {
       if (asking) {
@@ -156,6 +155,7 @@ export function createAsk({ request, prefs, serverKey, capture, push, makeId = r
       }
       const controller = new AbortController();
       asking = controller;
+      showing = null;
       const png = held?.png ?? null;
       generation += 1;
       drop();
@@ -230,10 +230,10 @@ export function dockMenuWithAsk(existing, item) {
 
 export function installAsk({ ipcMain, BrowserWindow, globalShortcut, screen, desktopCapturer, systemPreferences, shell, platform, request, store, serverKey, openChat, log = () => {},
   frontmost = createFrontmostWindow({ platform, log }), dock = null, Menu = null }) {
-  let ask = null, previous = null;
+  let ask = null, previous = null, opening = 0, disposed = false;
   const panel = createAskPanel({ BrowserWindow, screen, onHide: ({ returnFocus } = {}) => {
+    opening += 1;
     ask?.clearCapture();
-    ask?.hidden();
     // Focus goes back only from the panel itself: a user who already switched apps keeps their choice (D31).
     if (returnFocus && previous) void frontmost.activate(previous.pid).catch(() => {});
   } });
@@ -243,8 +243,12 @@ export function installAsk({ ipcMain, BrowserWindow, globalShortcut, screen, des
   const unregister = registerAskIpc({ ipcMain, owns: panel.owns, ask, panel: { hide: panel.hide, fit: panel.fit, openChat } });
   const show = () => { try { panel.show(); } catch (error) { log(`ask panel failed: ${error?.message ?? error}`); } };
   /** The previous window is read before the panel takes focus; a slow or missing helper just leaves it unknown. */
+  /** Only the latest open lands; one overtaken by another open, a hide or close() is dropped. */
   const open = async () => {
-    previous = (await frontmost.read().catch(() => null))?.previous ?? null;
+    const mine = ++opening;
+    const read = (await frontmost.read().catch(() => null))?.previous ?? null;
+    if (disposed || mine !== opening) return;
+    previous = read;
     show();
   };
   const shortcut = createAskShortcut({ globalShortcut, log, onPress: () => (panel.focused() ? panel.hide() : open()) });
@@ -262,6 +266,7 @@ export function installAsk({ ipcMain, BrowserWindow, globalShortcut, screen, des
     /** A thread's desktop banner is held back while the panel shows its reply (D36). */
     suppresses: threadId => panel.visible() && ask.showingThread() === threadId,
     close() {
+      disposed = true;
       shortcut.close();
       ask.close();
       unregister();

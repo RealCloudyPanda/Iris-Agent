@@ -7,7 +7,7 @@ import { ASK_ACCELERATOR } from "./ask-shortcut.mjs";
 const settle = async () => { for (let i = 0; i < 10; i += 1) await new Promise(resolve => setImmediate(resolve)); };
 const PREVIOUS = { pid: 42, bundleId: "com.example.editor", appName: "Editor", windowNumber: 7, title: "notes.txt" };
 
-function world({ taken = false, previous = PREVIOUS, dock = null } = {}) {
+function world({ taken = false, previous = PREVIOUS, dock = null, read = null } = {}) {
   const made = [], activated = [], keys = new Map();
   class FakeWindow {
     static getAllWindows() { return made; }
@@ -39,7 +39,7 @@ function world({ taken = false, previous = PREVIOUS, dock = null } = {}) {
   const globalShortcut = { register: (key, fn) => { if (taken) return false; keys.set(key, fn); return true; }, unregister: key => keys.delete(key) };
   const screen = { getCursorScreenPoint: () => ({ x: 0, y: 0 }), getDisplayNearestPoint: () => ({ workArea: { x: 0, y: 0, width: 1440, height: 900 } }) };
   const frontmost = {
-    read: async () => ({ previous, windows: [{ windowNumber: 7, appName: "Editor" }, { windowNumber: 9, appName: "Mail" }] }),
+    read: read ?? (async () => ({ previous, windows: [{ windowNumber: 7, appName: "Editor" }, { windowNumber: 9, appName: "Mail" }] })),
     activate: async pid => { activated.push(pid); return true; },
   };
   const installed = installAsk({ ipcMain, BrowserWindow: FakeWindow, globalShortcut, screen, desktopCapturer: {}, systemPreferences: {}, shell: {}, platform: "darwin",
@@ -107,6 +107,44 @@ test("suppresses only while the panel is visible", async () => {
   assert.equal(w.installed.suppresses("t1"), false);
   await w.press();
   assert.equal(w.installed.suppresses("t1"), false, "no ask yet");
+});
+
+function deferredReads() {
+  const pending = [];
+  return { pending, read: () => new Promise(resolve => pending.push(resolve)) };
+}
+
+test("an open overtaken by a later open drops its helper result and does not show twice", async () => {
+  const d = deferredReads();
+  const w = world({ read: d.read });
+  const first = w.installed.open(), second = w.installed.open();
+  d.pending[1]({ previous: { ...PREVIOUS, pid: 2 }, windows: [] });
+  await second;
+  d.pending[0]({ previous: { ...PREVIOUS, pid: 1 }, windows: [] });
+  await first;
+  w.listeners.get("ask:close")[0](w.from());
+  await settle();
+  assert.deepEqual(w.activated, [2], "the stale open did not overwrite the previous app");
+});
+
+test("an open still reading when the panel hides or Ask closes never shows the panel", async () => {
+  const d = deferredReads();
+  const w = world({ read: d.read });
+  const shown = w.installed.open();
+  d.pending[0]({ previous: PREVIOUS, windows: [] });
+  await shown;
+  assert.equal(w.win().visible, true);
+  const late = w.installed.open();
+  w.listeners.get("ask:close")[0](w.from());
+  d.pending.at(-1)({ previous: PREVIOUS, windows: [] });
+  await late;
+  assert.equal(w.win().visible, false);
+  const closed = world({ read: d.read });
+  const opening = closed.installed.open();
+  closed.installed.close();
+  d.pending.at(-1)({ previous: PREVIOUS, windows: [] });
+  await opening;
+  assert.equal(closed.made.length, 0, "no window made after close");
 });
 
 test("labelWindows names each window's app and preselects the previous window by number, else by title", () => {

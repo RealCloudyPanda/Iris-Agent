@@ -268,15 +268,18 @@ test("only the latest of two overlapping captures is kept", async () => {
   assert.equal(h.ask.held(), true);
 });
 
-test("the panel's thread is known from the ask's start until the panel hides (D36)", async () => {
+test("the displayed thread is kept after the reply and replaced when the next ask starts (D36)", async () => {
   const h = harness();
   assert.equal(h.ask.showingThread(), null);
   const sent = h.ask.send({ botId: "codex-bot", text: "hi" });
   await h.answer("id-1");
   await sent;
   assert.equal(h.ask.showingThread(), "thread-1");
-  h.ask.hidden();
-  assert.equal(h.ask.showingThread(), null);
+  h.ask.clearCapture();
+  assert.equal(h.ask.showingThread(), "thread-1", "hiding the panel does not forget it");
+  const next = h.ask.send({ botId: "nobody", text: "again" });
+  assert.equal(h.ask.showingThread(), null, "a new ask replaces the displayed reply");
+  await next;
 });
 
 test("pickWindows adds app names and preselects the previous window", async () => {
