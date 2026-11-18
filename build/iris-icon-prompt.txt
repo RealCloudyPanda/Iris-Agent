@@ -1,0 +1,4 @@
+Imagegen concept prompt:
+Use case: logo-brand. Create a new original app icon for Iris, a screen question assistant. A simple bold abstract six-blade iris/aperture ring, pale ivory blades on a deep violet rounded-square plate, central open dark hexagonal pupil. Flat vector-like geometry, extremely high contrast, centered symmetrical composition, clean crisp edges, no gradients, no mascot, no text, no letters, no watermark. Square 1024 image. This is a final desktop app icon.
+
+The generated concept was redrawn as build/icon.svg for consistent vector and raster exports. scripts/build-iris-icons.mjs generates the PNG, ICO and ICNS assets. The iconset PNGs were resized with sips. iconutil rejected the iconset in this environment; ICNS uses PNG payloads from the Node generator instead.
