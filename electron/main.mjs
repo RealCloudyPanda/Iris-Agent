@@ -186,7 +186,7 @@ if (linuxSoftwareRendering) app.disableHardwareAcceleration();
 if (process.platform === "linux") app.setDesktopName("dev.realcloudypanda.iris.desktop");
 
 if (!app.requestSingleInstanceLock()) {
-  console.log("[desktop] OpenMausBot is already running — focusing that window");
+  console.log("[desktop] Iris Agent is already running — focusing that window");
   process.exit(0);
 }
 

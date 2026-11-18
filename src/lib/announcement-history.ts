@@ -5,7 +5,7 @@ import { useSyncExternalStore } from "react";
 import { BOAT_OFFER, boatClaimMailto } from "@/lib/boat-offer";
 import type { CloudSource } from "@/lib/cloud-plan";
 import type { OnboardingStatus } from "@/lib/onboarding";
-import { BOAT_OFFER_NOTICE, CLOUD_INTRO, dismissNotice, GROK_MOVE_NOTICE, MODELGO_OFFER_NOTICE, noticeSeen, PRODUCT_HUNT_NOTICE, PRODUCT_HUNT_UNTIL, PRODUCT_HUNT_URL,
+import { BOAT_OFFER_NOTICE, CLOUD_INTRO, dismissNotice, GROK_MOVE_NOTICE, GROK_MOVE_OFFERED, MODELGO_OFFER_NOTICE, noticeSeen, PRODUCT_HUNT_NOTICE, PRODUCT_HUNT_UNTIL, PRODUCT_HUNT_URL,
   TEAMS_NOTICE, WHATS_NEW_NOTICE } from "@/lib/notices";
 import type { LocaleKey } from "@/locales";
 import type { ConfigStatus } from "@/state/config-status";
@@ -64,7 +64,7 @@ export const BUILT_IN_ANNOUNCEMENTS: readonly BuiltInAnnouncement[] = [
   { id: MODELGO_OFFER_NOTICE, date: "2026-11-11", title: "modelgoOffer.title", body: "modelgoOffer.line", mark: "modelgo", for: facts => facts.sponsors && facts.modelgo && !facts.branded,
     open: { buttons: [{ label: "modelgoOffer.getKey", action: { open_url: MODELGO_URL } }] } },
   { id: GROK_MOVE_NOTICE, date: "2026-11-04", title: "settings.import.grokTitle", body: "grokMove.popup.body", mark: "grok",
-    for: facts => everywhere(facts) && !facts.remote && facts.canSave && !facts.team, open: { modal: "grok-move" } },
+    for: facts => GROK_MOVE_OFFERED && everywhere(facts) && !facts.remote && facts.canSave && !facts.team, open: { modal: "grok-move" } },
   { id: WHATS_NEW_NOTICE, date: "2026-10-31", title: "whatsNew.cloud.title", body: "whatsNew.cloud.body", mark: "cloud",
     for: facts => everywhere(facts) && facts.cloudSale, open: { modal: "whats-new" } },
   { id: BOAT_OFFER_NOTICE, date: "2026-10-31", title: "boatOffer.title", body: "boatOffer.body", mark: "boat", for: facts => facts.sponsors && !facts.branded,

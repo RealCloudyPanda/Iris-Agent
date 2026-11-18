@@ -2,6 +2,7 @@ import {
   Archive, ArrowLeftRight, Bot, Coins, CreditCard, LockKeyhole, Monitor, Palette, Server, SlidersHorizontal, Smartphone, Sparkles, Users,
   type LucideIcon,
 } from "lucide-react";
+import { GROK_MOVE_OFFERED } from "@/lib/notices";
 import type { LocaleKey } from "@/locales";
 import type { AppSettingsSection, SettingsPageId } from "@/state/store";
 
@@ -211,7 +212,7 @@ export const SETTINGS_INDEX: readonly SettingsIndexEntry[] = [
   { id: "saved-steps", page: "desktops", anchor: "automation", labelKey: "settings.savedSteps.title", advanced: true, synonyms: ["repeat", "saved steps", "without ai"] },
   { id: "vault", page: "vault", labelKey: "settings.section.vault", topFor: ["password", "passwords", "login", "logins"], synonyms: ["secrets", "1password", "2fa", "totp"] },
   { id: "spending", page: "usage", labelKey: "settings.page.spending", topFor: ["spending", "cost", "costs", "tokens", "money"], synonyms: ["usage"] },
-  { id: "grok-move", page: "transfer", anchor: "grok-move", labelKey: "settings.import.grokTitle", sectionKey: "settings.data.bringIn", topFor: ["grok", "grok bot", "move from"], synonyms: ["import", "bring", "another app"] },
+  { id: "grok-move", page: "transfer", anchor: "grok-move", labelKey: "settings.import.grokTitle", sectionKey: "settings.data.bringIn", when: () => GROK_MOVE_OFFERED, topFor: ["grok", "grok bot", "move from"], synonyms: ["import", "bring", "another app"] },
   { id: "ai-apps", page: "transfer", anchor: "bring-in", labelKey: "settings.import.appsTitle", sectionKey: "settings.data.bringIn", synonyms: ["import", "bring", "skills", "mcp", "claude code", "codex", "cursor", "gemini"] },
   { id: "backup-import", page: "transfer", anchor: "bring-in", labelKey: "backup.import", sectionKey: "settings.data.bringIn", topFor: ["restore"], synonyms: ["import", "bring", "backup", "backups", "bring back"] },
   { id: "bring-in", page: "transfer", anchor: "bring-in", labelKey: "settings.data.bringIn", synonyms: ["import", "move from", "bring"] },
