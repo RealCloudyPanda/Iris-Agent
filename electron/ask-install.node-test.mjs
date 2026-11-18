@@ -1,13 +1,13 @@
 import { EventEmitter } from "node:events";
 import test from "node:test";
 import assert from "node:assert/strict";
-import { installAsk, labelWindows } from "./ask-main.mjs";
+import { dockMenuWithAsk, installAsk, labelWindows } from "./ask-main.mjs";
 import { ASK_ACCELERATOR } from "./ask-shortcut.mjs";
 
 const settle = async () => { for (let i = 0; i < 10; i += 1) await new Promise(resolve => setImmediate(resolve)); };
 const PREVIOUS = { pid: 42, bundleId: "com.example.editor", appName: "Editor", windowNumber: 7, title: "notes.txt" };
 
-function world({ taken = false, previous = PREVIOUS } = {}) {
+function world({ taken = false, previous = PREVIOUS, dock = null } = {}) {
   const made = [], activated = [], keys = new Map();
   class FakeWindow {
     static getAllWindows() { return made; }
@@ -43,7 +43,7 @@ function world({ taken = false, previous = PREVIOUS } = {}) {
     activate: async pid => { activated.push(pid); return true; },
   };
   const installed = installAsk({ ipcMain, BrowserWindow: FakeWindow, globalShortcut, screen, desktopCapturer: {}, systemPreferences: {}, shell: {}, platform: "darwin",
-    request: async () => { throw new Error("no server"); }, store: { read: () => ({}), write() {} }, serverKey: () => "srv", openChat: () => {}, frontmost });
+    request: async () => { throw new Error("no server"); }, store: { read: () => ({}), write() {} }, serverKey: () => "srv", openChat: () => {}, frontmost, dock, Menu: { buildFromTemplate: items => ({ items }) } });
   const press = async () => { keys.get(ASK_ACCELERATOR)(); await settle(); };
   const win = () => made[0];
   const from = () => ({ sender: win().webContents });
@@ -95,7 +95,7 @@ test("no focus return when the user already switched apps, when opening the chat
 
 test("the tray item names the shortcut, or says it is unavailable, and opens the panel", async () => {
   const w = world();
-  assert.deepEqual({ ...w.installed.trayItem(), click: undefined }, { label: "Ask…", accelerator: ASK_ACCELERATOR, registerAccelerator: false, click: undefined });
+  assert.deepEqual({ ...w.installed.trayItem(), click: undefined }, { id: "ask-panel", label: "Ask…", accelerator: ASK_ACCELERATOR, registerAccelerator: false, click: undefined });
   w.installed.trayItem().click();
   await settle();
   assert.equal(w.win().visible, true);
@@ -116,4 +116,16 @@ test("labelWindows names each window's app and preselects the previous window by
   const byTitle = labelWindows([{ id: "window:1:0", name: "notes.txt" }], { ...PREVIOUS, windowNumber: null }, []);
   assert.deepEqual(byTitle.map(w => [w.app, w.preselected]), [["Editor", true]]);
   assert.deepEqual(labelWindows(windows, null, []).map(w => w.preselected), [false, false, false]);
+});
+
+test("the Dock menu gains the Ask item first and keeps its other items", async () => {
+  const other = { id: "other", label: "New window" };
+  let menu = { items: [other] };
+  const w = world({ dock: { getMenu: () => menu, setMenu: next => { menu = next; } } });
+  assert.deepEqual(menu.items.map(item => item.label), ["Ask…", "New window"]);
+  menu.items[0].click();
+  await settle();
+  assert.equal(w.win().visible, true);
+  assert.deepEqual(dockMenuWithAsk(menu, { id: "ask-panel", label: "Ask… (shortcut unavailable)" }).map(item => item.label), ["Ask… (shortcut unavailable)", "New window"]);
+  assert.deepEqual(dockMenuWithAsk(null, other), [other]);
 });

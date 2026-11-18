@@ -223,8 +223,13 @@ export function registerAskIpc({ ipcMain, owns, ask, panel }) {
  * Starts the Ask panel: the shortcut now, the window on first press. `request(route, init)` reaches this computer's
  * server; `store` is a { read, write } JSON file; `openChat(chat|null)` shows the main window on that thread.
  */
+/** The macOS Dock menu with the Ask item first, keeping whatever else it already holds (D21). */
+export function dockMenuWithAsk(existing, item) {
+  return [item, ...(existing?.items ?? []).filter(entry => entry.id !== item.id)];
+}
+
 export function installAsk({ ipcMain, BrowserWindow, globalShortcut, screen, desktopCapturer, systemPreferences, shell, platform, request, store, serverKey, openChat, log = () => {},
-  frontmost = createFrontmostWindow({ platform, log }) }) {
+  frontmost = createFrontmostWindow({ platform, log }), dock = null, Menu = null }) {
   let ask = null, previous = null;
   const panel = createAskPanel({ BrowserWindow, screen, onHide: ({ returnFocus } = {}) => {
     ask?.clearCapture();
@@ -243,13 +248,17 @@ export function installAsk({ ipcMain, BrowserWindow, globalShortcut, screen, des
     show();
   };
   const shortcut = createAskShortcut({ globalShortcut, log, onPress: () => (panel.focused() ? panel.hide() : open()) });
+  /** The tray, Dock and app menu "Ask…" item (D21), labelled with the shortcut or why it is missing. */
+  const trayItem = () => (shortcut.state().registered
+    ? { id: "ask-panel", label: "Ask…", accelerator: ASK_ACCELERATOR, registerAccelerator: false, click: () => void open() }
+    : { id: "ask-panel", label: "Ask… (shortcut unavailable)", click: () => void open() });
+  if (dock && Menu) {
+    try { dock.setMenu(Menu.buildFromTemplate(dockMenuWithAsk(dock.getMenu?.(), trayItem()))); } catch (error) { log(`ask dock item failed: ${error?.message ?? error}`); }
+  }
   return {
     state: shortcut.state,
     open,
-    /** The tray's "Ask…" item (D21), labelled with the shortcut or why it is missing. */
-    trayItem: () => (shortcut.state().registered
-      ? { label: "Ask…", accelerator: ASK_ACCELERATOR, registerAccelerator: false, click: () => void open() }
-      : { label: "Ask… (shortcut unavailable)", click: () => void open() }),
+    trayItem,
     /** A thread's desktop banner is held back while the panel shows its reply (D36). */
     suppresses: threadId => panel.visible() && ask.showingThread() === threadId,
     close() {

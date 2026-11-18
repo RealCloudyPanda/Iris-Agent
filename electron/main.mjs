@@ -1514,7 +1514,7 @@ function refreshApplicationMenu() {
       onOpenSettings: () => { if (mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send("app:open-settings"); },
       openAtLogin: loginItem.available() ? { checked: loginItem.chosen(), onToggle: on => { loginItem.choose(on); refreshApplicationMenu(); } } : null,
       ...cloudMenuOptions(),
-      home: homeWindow.cloudOrigin() ? { origin: homeWindow.cloudOrigin(), onBack: () => void showHome({ place: "cloud" }) } : null, t: nativeT,
+      home: homeWindow.cloudOrigin() ? { origin: homeWindow.cloudOrigin(), onBack: () => void showHome({ place: "cloud" }) } : null, ask: askPanel?.trayItem() ?? null, t: nativeT,
     }),
   );
 }
@@ -2940,7 +2940,7 @@ app.whenReady().then(async () => {
   talk.start({ globalShortcut, screen, prefs: desktopPrefs, remote: () => Boolean(desktopRemoteAccess), away: () => homeWindow.current().kind !== "computer", starting: () => !serverReady, localRequest: localServerRequest, dataDir: () => runningDataDir });
   if (!desktopRemoteAccess) askPanel = installAsk({ ipcMain, BrowserWindow, globalShortcut, screen, desktopCapturer, systemPreferences, shell, platform: process.platform, request: app.isPackaged ? localServerRequest : (route, init) => fetch(new URL(route, DEV_URL), init),
     store: jsonFile(path.join(app.getPath("userData"), "ask-panel.json")), serverKey: () => (app.isPackaged ? runningDataDir : DEV_URL) ?? "local", log: slog,
-    openChat: chat => (chat ? queueChatLink(`openmausbot://thread/${encodeURIComponent(chat.threadId)}?bot=${encodeURIComponent(chat.botId)}`) : revealForLink()) }); desktopTray?.relabel();
+    dock: process.platform === "darwin" ? app.dock : null, Menu, openChat: chat => (chat ? queueChatLink(`openmausbot://thread/${encodeURIComponent(chat.threadId)}?bot=${encodeURIComponent(chat.botId)}`) : revealForLink()) }); desktopTray?.relabel(); refreshApplicationMenu();
   // Before the window, so the harness has the CUA descriptor on first render.
   cuaReady =
     !desktopRemoteAccess && (process.platform === "darwin" || process.platform === "linux" || process.platform === "win32")
