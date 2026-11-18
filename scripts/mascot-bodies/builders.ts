@@ -1,6 +1,7 @@
 /**
- * The ten catalog outlines, as absolute cubic path data. Adapted from Blob
- * Studio's studio/src/shapes/builtin.ts at fixed parameters. Cubics only: the
+ * The Iris character outlines, as absolute cubic path data. Every outline is
+ * sampled from a closed parametric curve written here and joined with a
+ * Catmull-Rom spline, so each one is original geometry. Cubics only: the
  * phone's path parser understands `M`, `C` and `Z` and nothing else.
  */
 
@@ -9,24 +10,16 @@ export interface BodyDef {
   name: string
   /** Absolute cubic path data: `M`, `C` and `Z` only. */
   d: string
+  /** Optional decoration drawn over the fill in the outline's own coordinates:
+   * kept to the rim so it never sits under the face. */
+  detail?: string
   /** `[minX, minY, width, height]` of the nominal canvas, advisory only:
-   * `cursor`'s is the original artwork canvas and `blob`'s is padded, so
    * bounds come from flattening the path. */
   viewBox: [number, number, number, number]
 }
 
 type Sextet = [number, number, number, number, number, number]
-
-/** Quadratic control point to its exact cubic pair. */
-function quadToCubic(
-  x0: number, y0: number, cx: number, cy: number, x1: number, y1: number
-): Sextet {
-  return [
-    x0 + (2 / 3) * (cx - x0), y0 + (2 / 3) * (cy - y0),
-    x1 + (2 / 3) * (cx - x1), y1 + (2 / 3) * (cy - y1),
-    x1, y1,
-  ]
-}
+type Point = [number, number]
 
 /** A straight run as a degenerate cubic, so the emitted path stays cubics-only. */
 function lineToCubic(x0: number, y0: number, x1: number, y1: number): Sextet {
@@ -37,13 +30,10 @@ function lineToCubic(x0: number, y0: number, x1: number, y1: number): Sextet {
   ]
 }
 
-/** Circular-arc magic number: four cubics approximate a circle to ~0.02%. */
-const KAPPA = 0.5522847498307936
-
 /** Fixed-point, never exponent notation: the iOS parser reads every letter as a
  * command, so a stray `e` would corrupt the outline. */
 function fmt(n: number): string {
-  let s = n.toFixed(5)
+  let s = n.toFixed(3)
   if (s.includes(".")) s = s.replace(/0+$/, "").replace(/\.$/, "")
   return s === "-0" ? "0" : s
 }
@@ -71,21 +61,6 @@ class Path {
     return this.curveTo(lineToCubic(this.at[0], this.at[1], x, y))
   }
 
-  quadTo(cx: number, cy: number, x: number, y: number): Path {
-    return this.curveTo(quadToCubic(this.at[0], this.at[1], cx, cy, x, y))
-  }
-
-  /** A quarter ellipse to (x, y), bulging towards the box corner (kx, ky). Control
-   * points go KAPPA of the way to the corner, not 2/3: a circle, not a parabola. */
-  quarterTo(kx: number, ky: number, x: number, y: number): Path {
-    const [x0, y0] = this.at
-    return this.curveTo([
-      x0 + (kx - x0) * KAPPA, y0 + (ky - y0) * KAPPA,
-      x + (kx - x) * KAPPA, y + (ky - y) * KAPPA,
-      x, y,
-    ])
-  }
-
   close(): string {
     const [x, y] = this.at
     const [sx, sy] = this.origin
@@ -94,169 +69,149 @@ class Path {
   }
 }
 
+const TAU = Math.PI * 2
+const C = 100
 
-/** Blob Studio's `circle`, as four KAPPA quarters instead of two `A` halves. */
-function buildEllipse(w: number, h: number): string {
-  const rx = w / 2
-  const ry = h / 2
-  return new Path()
-    .moveTo(100 + rx, 100)
-    .quarterTo(100 + rx, 100 + ry, 100, 100 + ry)
-    .quarterTo(100 - rx, 100 + ry, 100 - rx, 100)
-    .quarterTo(100 - rx, 100 - ry, 100, 100 - ry)
-    .quarterTo(100 + rx, 100 - ry, 100 + rx, 100)
-    .close()
-}
-
-/** Blob Studio's `roundedBox`, with its quadratic corners promoted to KAPPA arcs:
- * quadratics bulge visibly at a 75-unit radius. */
-function buildRoundedBox(w: number, h: number, radius: number): string {
-  const x = 100 - w / 2
-  const y = 100 - h / 2
-  const k = Math.min(radius, w / 2, h / 2)
-  // A cap that eats the whole side leaves a zero-length run: skip it.
-  const wide = w - 2 * k > 1e-9
-  const tall = h - 2 * k > 1e-9
-  const p = new Path().moveTo(x + k, y)
-  if (wide) p.lineTo(x + w - k, y)
-  p.quarterTo(x + w, y, x + w, y + k)
-  if (tall) p.lineTo(x + w, y + h - k)
-  p.quarterTo(x + w, y + h, x + w - k, y + h)
-  if (wide) p.lineTo(x + k, y + h)
-  p.quarterTo(x, y + h, x, y + h - k)
-  if (tall) p.lineTo(x, y + k)
-  p.quarterTo(x, y, x + k, y)
-  return p.close()
-}
-
-/**
- * Blob Studio's `blob`: a circle whose radius breathes around the turn, drawn as
- * quadratics through the midpoints between successive samples. Each quadratic
- * becomes its exact cubic, so the curve is unchanged, not re-fitted.
- */
-function buildBlob(w: number, h: number, wobble: number): string {
-  const STEPS = 24
-  const pts: [number, number][] = []
-  for (let i = 0; i < STEPS; i++) {
-    const a = (i / STEPS) * Math.PI * 2
-    const r = 1 + Math.sin(a * 3 + 0.6) * 0.07 * wobble + Math.sin(a * 2 - 1.1) * 0.05 * wobble
-    pts.push([100 + Math.cos(a) * (w / 2) * r, 100 + Math.sin(a) * (h / 2) * r])
-  }
-  const mid = (i: number): [number, number] => {
-    const c = pts[i]
-    const n = pts[(i + 1) % STEPS]
-    return [(c[0] + n[0]) / 2, (c[1] + n[1]) / 2]
-  }
-  const p = new Path().moveTo(mid(0)[0], mid(0)[1])
-  for (let i = 1; i < STEPS; i++) {
-    const m = mid(i)
-    p.quadTo(pts[i][0], pts[i][1], m[0], m[1])
-  }
-  const first = mid(0)
-  p.quadTo(pts[0][0], pts[0][1], first[0], first[1])
-  return p.close()
-}
-
-/**
- * Blob Studio's `drop`. Its two `C` segments carry over untouched; its one `A`
- * — a semicircle of radius `hw` across the bottom — becomes two KAPPA quarters.
- */
-function buildDrop(w: number, h: number, belly: number): string {
-  const hw = w / 2
-  const top = 100 - h / 2
-  const b = h * (0.3 + belly * 0.35)
-  const waist = 100 + h / 2 - hw
-  return new Path()
-    .moveTo(100, top)
-    .curveTo([100 + hw * 0.78, top + b * 0.75, 100 + hw, top + b, 100 + hw, waist])
-    .quarterTo(100 + hw, waist + hw, 100, waist + hw)
-    .quarterTo(100 - hw, waist + hw, 100 - hw, waist)
-    .curveTo([100 - hw, top + b, 100 - hw * 0.78, top + b * 0.75, 100, top])
-    .close()
-}
-
-/** Blob Studio's `cone`: quadratics via `quadToCubic`, straight runs via `lineToCubic`. */
-function buildCone(w: number, h: number, tip: number, base: number): string {
-  const hw = w / 2
-  const hh = h / 2
-  const t = hw * tip
-  const b = hw * base * 0.55
-  return new Path()
-    .moveTo(100 - t, 100 - hh + t * 0.9)
-    .quadTo(100, 100 - hh, 100 + t, 100 - hh + t * 0.9)
-    .lineTo(100 + hw - b * 0.4, 100 + hh - b)
-    .quadTo(100 + hw, 100 + hh, 100 + hw - b, 100 + hh)
-    .lineTo(100 - hw + b, 100 + hh)
-    .quadTo(100 - hw, 100 + hh, 100 - hw + b * 0.4, 100 + hh - b)
-    .close()
-}
-
-const lerp = (a: [number, number], b: [number, number], t: number): [number, number] => [
-  a[0] + (b[0] - a[0]) * t,
-  a[1] + (b[1] - a[1]) * t,
-]
-
-/** Blob Studio's `hex`: each vertex cut back along both its edges and arced across. */
-function buildPolygon(w: number, h: number, sides: number, round: number): string {
-  const n = Math.max(3, Math.round(sides))
-  const pts: [number, number][] = []
+/** A closed Catmull-Rom spline through `pts`, as exact cubics. */
+function spline(pts: Point[]): string {
+  const n = pts.length
+  const at = (i: number) => pts[(i + n) % n]
+  const p = new Path().moveTo(pts[0][0], pts[0][1])
   for (let i = 0; i < n; i++) {
-    const a = (i / n) * Math.PI * 2 - Math.PI / 2
-    pts.push([100 + Math.cos(a) * (w / 2), 100 + Math.sin(a) * (h / 2)])
-  }
-  const p = new Path()
-  for (let i = 0; i < n; i++) {
-    const prev = pts[(i - 1 + n) % n]
-    const cur = pts[i]
-    const next = pts[(i + 1) % n]
-    const a = lerp(cur, prev, round * 0.5)
-    const b = lerp(cur, next, round * 0.5)
-    if (i === 0) p.moveTo(a[0], a[1])
-    else p.lineTo(a[0], a[1])
-    p.quadTo(cur[0], cur[1], b[0], b[1])
+    const p0 = at(i - 1), p1 = at(i), p2 = at(i + 1), p3 = at(i + 2)
+    p.curveTo([
+      p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6,
+      p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6,
+      p2[0], p2[1],
+    ])
   }
   return p.close()
 }
 
-/** Blob Studio's `star`. It emits only lines, so every edge is a `lineToCubic`. */
-function buildStar(w: number, h: number, points: number, inner: number): string {
-  const n = Math.max(3, Math.round(points))
-  const p = new Path()
-  for (let i = 0; i < n * 2; i++) {
-    const a = (i / (n * 2)) * Math.PI * 2 - Math.PI / 2
-    const k = i % 2 === 0 ? 1 : inner
-    const x = 100 + Math.cos(a) * (w / 2) * k
-    const y = 100 + Math.sin(a) * (h / 2) * k
-    if (i === 0) p.moveTo(x, y)
-    else p.lineTo(x, y)
+/** Samples a radius function around the stage centre, starting at the top. */
+function polar(r: (a: number) => number, steps = 72, sx = 1, sy = 1): string {
+  const pts: Point[] = []
+  for (let i = 0; i < steps; i++) {
+    const a = (i / steps) * TAU - Math.PI / 2
+    const k = r(a)
+    pts.push([C + Math.cos(a) * k * sx, C + Math.sin(a) * k * sy])
   }
-  return p.close()
+  return spline(pts)
 }
 
+/** A regular polygon with circular corners, sampled densely enough that the
+ * spline keeps its sides straight. */
+function roundedPolygon(sides: number, radius: number, corner: number, turn: number): string {
+  const pts: Point[] = []
+  const half = Math.PI / sides
+  const inset = corner / Math.cos(half)
+  for (let i = 0; i < sides; i++) {
+    const v = turn + (i / sides) * TAU
+    const cx = C + Math.cos(v) * (radius - inset)
+    const cy = C + Math.sin(v) * (radius - inset)
+    for (let j = 0; j <= 6; j++) {
+      const a = v - half + (j / 6) * 2 * half
+      pts.push([cx + Math.cos(a) * corner, cy + Math.sin(a) * corner])
+    }
+    const next = turn + ((i + 1) / sides) * TAU
+    const a0 = v + half, a1 = next - half
+    const from: Point = [cx + Math.cos(a0) * corner, cy + Math.sin(a0) * corner]
+    const nx = C + Math.cos(next) * (radius - inset), ny = C + Math.sin(next) * (radius - inset)
+    const to: Point = [nx + Math.cos(a1) * corner, ny + Math.sin(a1) * corner]
+    for (let j = 1; j < 4; j++) pts.push([from[0] + ((to[0] - from[0]) * j) / 4, from[1] + ((to[1] - from[1]) * j) / 4])
+  }
+  return spline(pts)
+}
 
-/**
- * The shipped maus artwork, copied verbatim from the avatar's
- * `DEFAULT_SILHOUETTE.body`; it is already cubics-only. Drawn pre-transform, so
- * its coordinates run negative (bbox -83.23,-16.56 .. 238.51,368.25).
- */
-const CURSOR_D = "M0 0 C1.12815992 0.94880479 2.25705591 1.89673511 3.38671875 2.84375 C5.57657936 4.68528228 7.75793952 6.53624249 9.93359375 8.39453125 C13.5602214 11.48647103 17.25022962 14.49819427 20.9453125 17.5078125 C25.41301487 21.15281776 29.86103386 24.8215994 34.31054688 28.48876953 C38.00933931 31.5370903 41.70951059 34.58367973 45.4140625 37.625 C52.50037463 43.44570076 59.55669812 49.29508834 66.54003906 55.23901367 C70.43289872 58.54377434 74.40406577 61.73568847 78.40625 64.90625 C82.05401433 67.85083084 85.6145398 70.89451533 89.18359375 73.93359375 C92.41424312 76.67774533 95.67698054 79.36747809 99 82 C103.47931906 85.54855146 107.83340036 89.22936876 112.18359375 92.93359375 C115.41424312 95.67774533 118.67698054 98.36747809 122 101 C125.9014198 104.09073517 129.71091352 107.27378506 133.5 110.5 C137.99002543 114.32092614 142.53350963 118.0537239 147.15234375 121.71875 C156.74255328 129.40144186 166.1812645 137.27326897 175.53833008 145.23754883 C179.4317456 148.54281661 183.40347641 151.73522157 187.40625 154.90625 C191.05401433 157.85083084 194.6145398 160.89451533 198.18359375 163.93359375 C201.41424312 166.67774533 204.67698054 169.36747809 208 172 C236.43637507 194.63776677 236.43637507 194.63776677 238.27050781 209.13867188 C239.19944445 221.27193361 237.57124038 231.13444436 230 241 C223.66050278 247.82715086 215.75482398 254.47140646 206.04764748 255.13307858 C205.3615811 255.13693349 204.67551472 255.1407884 203.96865845 255.14476013 C203.17563324 255.15165863 202.38260803 255.15855713 201.56555176 255.16566467 C200.27360901 255.16958473 200.27360901 255.16958473 198.95556641 255.17358398 C198.04112762 255.180271 197.12668884 255.18695801 196.18453979 255.19384766 C194.19843498 255.20789156 192.21231409 255.21978771 190.22618484 255.22979546 C187.07149762 255.24625057 183.91692738 255.26949556 180.76229858 255.29469299 C171.79227585 255.36530712 162.82220292 255.42526708 153.85205078 255.47680664 C148.36195434 255.5088283 142.87198905 255.55017011 137.38199997 255.59700203 C135.30028042 255.61289593 133.21853066 255.62527474 131.13676834 255.63390923 C104.46972494 255.74602279 80.75351522 259.19455182 60.52978516 278.41845703 C55.75259196 283.35727885 51.81217213 289.04473423 47.77441406 294.5859375 C44.62107661 298.87600364 41.36381878 303.08685058 38.125 307.3125 C32.82026548 314.26649347 27.55386673 321.24815866 22.3125 328.25 C21.07690581 329.89589556 19.84122979 331.5417297 18.60546875 333.1875 C16.22002164 336.36552908 13.84996009 339.55428087 11.48828125 342.75 C3.0450311 354.10095576 -5.25712203 365.22607871 -20 368 C-33.42903027 368.85957067 -44.2929604 367.90032788 -55 358.9140625 C-63.51513963 350.76480778 -67.79688328 340.99527428 -68.37686157 329.29350281 C-68.43541887 328.1487851 -68.49397617 327.00406738 -68.55430794 325.82466125 C-68.61453573 324.57243271 -68.67476353 323.32020416 -68.73681641 322.0300293 C-68.80423726 320.68369989 -68.87198477 319.33738681 -68.94003105 317.99108887 C-69.12569162 314.29881586 -69.30666938 310.60632592 -69.48688698 306.91378379 C-69.68142908 302.94481208 -69.88036562 298.97606035 -70.07873535 295.00727844 C-70.55465828 285.46711948 -71.02377004 275.92663022 -71.49235249 266.3861084 C-71.71278092 261.90166682 -71.93398876 257.41726373 -72.1552124 252.93286133 C-72.22122149 251.59460763 -72.22122149 251.59460763 -72.28856409 250.2293185 C-72.37783973 248.41936974 -72.46711776 246.6094211 -72.55639815 244.79947257 C-72.7821203 240.22326204 -73.00777832 235.64704836 -73.23336792 231.0708313 C-73.2783997 230.15734865 -73.32343148 229.24386601 -73.36982787 228.30270207 C-73.64581049 222.70253299 -73.92113412 217.10233189 -74.19602597 211.50210917 C-75.35713101 187.85146938 -76.54638525 164.20245932 -77.76320994 140.55462319 C-78.3174362 129.77404232 -78.86176258 118.9929594 -79.40472984 108.2118063 C-79.83986282 99.58021501 -80.28322749 90.94912395 -80.73695588 82.31848997 C-81.04621068 76.42094211 -81.34513355 70.52292566 -81.63612723 64.62444884 C-81.8031421 61.24551841 -81.97612174 57.86718776 -82.15861511 54.48903847 C-84.29931862 14.73242483 -84.29931862 14.73242483 -72.03125 -1.625 C-50.89854752 -24.96559677 -21.34867451 -18.24899383 0 0 Z "
+const n2 = (n: number) => fmt(Math.round(n * 100) / 100)
 
-/** Ten outlines, in the order the catalog persists them. `cursor` is the default, so it leads. */
+/** Cream seams and soft highlights, in the brand's cream. */
+const CREAM = "#FCF8EA"
+const seam = (d: string, width: number, opacity: number) =>
+  `<path fill="none" stroke="${CREAM}" stroke-opacity="${opacity}" stroke-width="${width}" stroke-linecap="round" d="${d}"/>`
+const shine = (d: string, opacity: number) => `<path fill="#ffffff" fill-opacity="${opacity}" d="${d}"/>`
+
+/** Iris: a disc whose rim carries the six swept blade seams of the app's aperture mark. */
+function irisDetail(): string {
+  let d = ""
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * TAU - Math.PI / 2
+    const r0 = 98, r1 = 70
+    const sweep = 0.62
+    const x0 = C + Math.cos(a) * r0, y0 = C + Math.sin(a) * r0
+    const x1 = C + Math.cos(a + sweep) * r1, y1 = C + Math.sin(a + sweep) * r1
+    const mx = C + Math.cos(a + sweep * 0.42) * (r0 - 6), my = C + Math.sin(a + sweep * 0.42) * (r0 - 6)
+    d += `M${n2(x0)} ${n2(y0)}Q${n2(mx)} ${n2(my)} ${n2(x1)} ${n2(y1)}`
+  }
+  const ring = `<circle cx="${C}" cy="${C}" r="91" fill="none" stroke="${CREAM}" stroke-opacity="0.32" stroke-width="3"/>`
+  return seam(d, 4.5, 0.55) + ring
+}
+
+/** Orb: a glassy crescent of light across the upper left. */
+function orbDetail(): string {
+  return shine("M38 70C46 42 70 26 98 24C76 34 58 52 50 78C47 86 36 80 38 70Z", 0.42)
+}
+
+/** Petal: a short crease between each pair of lobes. */
+function petalDetail(lobes: number): string {
+  let d = ""
+  for (let i = 0; i < lobes; i++) {
+    const a = ((i + 0.5) / lobes) * TAU - Math.PI / 2
+    d += `M${n2(C + Math.cos(a) * 70)} ${n2(C + Math.sin(a) * 70)}L${n2(C + Math.cos(a) * 60)} ${n2(C + Math.sin(a) * 60)}`
+  }
+  return seam(d, 4, 0.5)
+}
+
+/** Hex: an inner bevel along the top two faces. */
+function hexDetail(): string {
+  const r = 86
+  const pts = [-150, -90, -30].map((deg) => [C + Math.cos((deg * Math.PI) / 180) * r, C + Math.sin((deg * Math.PI) / 180) * r])
+  return seam(`M${n2(pts[0][0])} ${n2(pts[0][1])}L${n2(pts[1][0])} ${n2(pts[1][1])}L${n2(pts[2][0])} ${n2(pts[2][1])}`, 4, 0.45)
+}
+
+/** Spark: a twinkle of light on the upper point. */
+function sparkDetail(): string {
+  return shine("M100 14C103 26 106 30 116 33C106 36 103 40 100 52C97 40 94 36 84 33C94 30 97 26 100 14Z", 0.55)
+}
+
+/** Drop: a gleam down the left flank. */
+function dropDetail(): string {
+  return seam("M34 150C42 168 56 180 74 186", 6, 0.42)
+}
+
+/** Pebble: two speckles low on the right. */
+function pebbleDetail(): string {
+  return `<g fill="${CREAM}" fill-opacity="0.45"><circle cx="150" cy="138" r="4.5"/><circle cx="162" cy="124" r="3"/></g>`
+}
+
+/** Mochi: a soft shine on the crown. */
+function mochiDetail(): string {
+  return shine("M56 52C70 36 96 30 118 34C98 40 80 48 66 62C60 68 50 60 56 52Z", 0.38)
+}
+
+/** The teardrop: pointed at the top, full at the bottom. */
+function dropOutline(): string {
+  const pts: Point[] = []
+  const steps = 72
+  for (let i = 0; i < steps; i++) {
+    const t = (i / steps) * TAU
+    const x = Math.sin(t) * Math.pow(Math.sin(t / 2), 0.7)
+    const y = -Math.cos(t)
+    pts.push([C + x * 92, C + y * 98])
+  }
+  return spline(pts)
+}
+
+/** Eight outlines, in the order the picker shows them. `iris` is the default, so it leads. */
 export const BODY_DEFS: BodyDef[] = [
-  { id: "cursor", name: "Cursor", d: CURSOR_D, viewBox: [0, 0, 512, 512] },
-  // The wobble reaches 4.2 units past the 200x200 stage, so its box is padded:
-  // a 200x200 viewBox would let the scanline pass shave the top lobe flat.
-  { id: "blob", name: "Blob", d: buildBlob(200, 200, 0.35), viewBox: [-5, -5, 210, 210] },
-  { id: "circle", name: "Circle", d: buildEllipse(200, 200), viewBox: [0, 0, 200, 200] },
-  { id: "squircle", name: "Squircle", d: buildRoundedBox(200, 200, (Math.min(200, 200) / 2) * 0.5), viewBox: [0, 0, 200, 200] },
-  { id: "capsule", name: "Capsule", d: buildRoundedBox(150, 200, Math.min(150, 200) / 2), viewBox: [0, 0, 200, 200] },
-  { id: "drop", name: "Drop", d: buildDrop(156, 194, 0.62), viewBox: [0, 0, 200, 200] },
-  { id: "shield", name: "Shield", d: buildCone(190, 200, 0.45, 0.9), viewBox: [0, 0, 200, 200] },
-  { id: "hexagon", name: "Hexagon", d: buildPolygon(196, 196, 6, 0.12), viewBox: [0, 0, 200, 200] },
-  { id: "diamond", name: "Diamond", d: buildPolygon(196, 196, 4, 0.12), viewBox: [0, 0, 200, 200] },
-  // A face-fit constraint, not taste: at the classic 0.42 the notches pinch the
-  // star to a 50-unit inscribed circle, and the smallest face clamps every body.
-  { id: "star", name: "Star", d: buildStar(196, 196, 5, 0.55), viewBox: [0, 0, 200, 200] },
+  { id: "iris", name: "Iris", d: polar((a) => 100 * (1 + 0.008 * Math.cos(6 * a))), detail: irisDetail(), viewBox: [0, 0, 200, 200] },
+  { id: "orb", name: "Orb", d: polar(() => 98), detail: orbDetail(), viewBox: [0, 0, 200, 200] },
+  { id: "pebble", name: "Pebble", d: polar((a) => 100 * (1 + 0.06 * Math.sin(2 * a + 0.5) + 0.035 * Math.cos(3 * a)), 72, 1, 0.82), detail: pebbleDetail(), viewBox: [0, 0, 200, 200] },
+  { id: "hex", name: "Hex", d: roundedPolygon(6, 100, 22, -Math.PI / 2), detail: hexDetail(), viewBox: [0, 0, 200, 200] },
+  { id: "drop", name: "Drop", d: dropOutline(), detail: dropDetail(), viewBox: [0, 0, 200, 200] },
+  { id: "petal", name: "Petal", d: polar((a) => 100 * (0.88 + 0.12 * Math.cos(5 * a))), detail: petalDetail(5), viewBox: [0, 0, 200, 200] },
+  { id: "mochi", name: "Mochi", d: polar((a) => 100 * Math.pow(Math.pow(Math.abs(Math.cos(a)), 3) + Math.pow(Math.abs(Math.sin(a)), Math.sin(a) > 0 ? 4 : 2.2), -1 / 3.2), 96), detail: mochiDetail(), viewBox: [0, 0, 200, 200] },
+  { id: "spark", name: "Spark", d: polar((a) => 100 * (0.74 + 0.26 * Math.pow(Math.abs(Math.cos(2 * a)), 3))), detail: sparkDetail(), viewBox: [0, 0, 200, 200] },
 ]
 
 export const BODY_IDS: string[] = BODY_DEFS.map(s => s.id)

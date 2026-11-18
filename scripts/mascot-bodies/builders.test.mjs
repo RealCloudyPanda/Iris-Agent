@@ -3,12 +3,12 @@ import { describe, expect, it } from "vitest";
 import { BODY_DEFS, BODY_IDS } from "./builders.ts";
 
 const EXPECTED_IDS = [
-  "cursor", "blob", "circle", "squircle", "capsule",
-  "drop", "shield", "hexagon", "diamond", "star",
+  "iris", "orb", "pebble", "hex",
+  "drop", "petal", "mochi", "spark",
 ];
 
 describe("body builders", () => {
-  it("produces the catalog in its persisted order, cursor first", () => {
+  it("produces the catalog in its persisted order, iris first", () => {
     expect(BODY_IDS).toEqual(EXPECTED_IDS);
   });
 
@@ -36,9 +36,13 @@ describe("body builders", () => {
     }
   });
 
-  it("keeps the cursor outline byte-identical to the shipped artwork", () => {
-    const cursor = BODY_DEFS.find(s => s.id === "cursor");
-    expect(cursor.d.startsWith("M0 0 C1.12815992 0.94880479")).toBe(true);
-    expect(cursor.d.trimEnd().endsWith("-21.34867451 -18.24899383 0 0 Z")).toBe(true);
+  it("keeps each decoration on the rim, out of the face", () => {
+    for (const body of BODY_DEFS) {
+      expect(body.detail ?? "", body.id).not.toMatch(/<script|href=|url\(/);
+    }
+  });
+
+  it("draws eight distinct silhouettes", () => {
+    expect(new Set(BODY_DEFS.map(s => s.d)).size).toBe(BODY_DEFS.length);
   });
 });

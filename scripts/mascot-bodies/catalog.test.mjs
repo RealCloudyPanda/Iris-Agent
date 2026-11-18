@@ -9,13 +9,13 @@ import {
 } from "../../shared/mascot-bodies.ts";
 
 describe("the generated catalog", () => {
-  it("carries all ten bodies", () => {
-    expect(MASCOT_BODY_IDS).toHaveLength(10);
+  it("carries all eight bodies", () => {
+    expect(MASCOT_BODY_IDS).toHaveLength(8);
     for (const id of MASCOT_BODY_IDS) expect(MASCOT_BODIES[id].id).toBe(id);
   });
 
-  it("defaults to the cursor", () => {
-    expect(DEFAULT_MASCOT_BODY).toBe("cursor");
+  it("defaults to the iris", () => {
+    expect(DEFAULT_MASCOT_BODY).toBe("iris");
   });
 
   it("gives every body the markup the renderer expects", () => {
@@ -46,18 +46,18 @@ describe("the generated catalog", () => {
 
 describe("botMascotBody", () => {
   it("accepts a known id", () => {
-    expect(botMascotBody("blob")).toBe("blob");
+    expect(botMascotBody("pebble")).toBe("pebble");
   });
 
-  it("falls back to the cursor for anything else", () => {
-    expect(botMascotBody("hexagram")).toBe("cursor");
-    expect(botMascotBody(undefined)).toBe("cursor");
-    expect(botMascotBody(null)).toBe("cursor");
-    expect(botMascotBody(42)).toBe("cursor");
+  it("falls back to the iris for anything else", () => {
+    expect(botMascotBody("hexagram")).toBe("iris");
+    expect(botMascotBody(undefined)).toBe("iris");
+    expect(botMascotBody(null)).toBe("iris");
+    expect(botMascotBody(42)).toBe("iris");
   });
 
   it("exposes a schema that rejects an unknown id", () => {
-    expect(mascotBodySchema.safeParse("star").success).toBe(true);
+    expect(mascotBodySchema.safeParse("spark").success).toBe(true);
     expect(mascotBodySchema.safeParse("nope").success).toBe(false);
   });
 });
