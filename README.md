@@ -1,4 +1,22 @@
+# Iris Agent
+
 Iris Agent is a fork of OpenMausBot (Apache-2.0)
+
+Iris Agent adds an **Ask panel** to OpenMausBot on macOS: press Control+Alt+A, optionally attach a screenshot of the
+window you were using, and ask one of your existing bots. The reply streams into the panel and the conversation is
+kept in that bot's "Quick asks" chat. Everything below the line is upstream OpenMausBot.
+
+- **Setup:** Node 24 (via fnm), then `corepack pnpm install`.
+- **Run (dev):** `corepack pnpm dev:server`, `corepack pnpm dev`, `corepack pnpm dev:desktop` in three terminals.
+  Dev builds use their own data (`~/.openmausbot-dev`) and their own Electron profile.
+- **Permissions:** Screen Recording is needed only to attach a window; text asks work without it.
+- **Limitations:** macOS only for now; images go only to bots on the Codex engine; approvals are answered in the full
+  app, not the panel; expired sign-in and rate limits show a generic error; a sent screenshot is stored locally and
+  sent to OpenAI; packaging, the idle benchmark and the manual macOS checks are not done yet.
+- **Docs:** [docs/ask-panel/](docs/ask-panel/README.md): architecture, protocols, privacy and security, test plan,
+  demo script, CI, repo map, decisions.
+
+---
 
 <div align="center">
 
