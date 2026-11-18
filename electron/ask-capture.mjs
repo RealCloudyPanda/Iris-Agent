@@ -13,7 +13,7 @@ export function fitLongEdge({ width, height }, max = MAX_LONG_EDGE) {
 }
 
 /** "window:<number>:<n>" → "<number>"; source ids and getMediaSourceId() agree on the middle part. */
-const windowNumber = id => String(id ?? "").split(":")[1] ?? "";
+export const windowNumber = id => String(id ?? "").split(":")[1] ?? "";
 
 export function withoutOwnWindows(sources, ownIds) {
   const own = new Set(ownIds.map(windowNumber).filter(Boolean));
