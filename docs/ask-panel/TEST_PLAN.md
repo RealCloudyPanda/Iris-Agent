@@ -48,3 +48,16 @@ Tool: `scripts/bench-ask-idle.mjs --pattern <regex> --seconds <n> --interval 5`.
 5. Wakeups are not measured by this script; use `top -stats pid,command,idlew -l 10` separately if needed.
 6. Pass: fork mean CPU within the stock runs' spread; no RSS growth before first use; no added timers/listeners
    (units above). Warm shortcut-to-panel under 150 ms needs a manual timing. Numbers are set only after the baseline.
+
+## Idle benchmark result (2026-11-18, one run)
+
+Machine: Apple M1, 8 GB, macOS 27.2.1. Dev build (`pnpm dev:desktop` against `pnpm dev:server` and Vite), Ask panel
+never opened, 60 s settle, then `node scripts/bench-ask-idle.mjs --pattern "mausbot-companion/node_modules/.pnpm/electron"
+--seconds 180 --interval 5` summed over all Electron processes:
+
+| samples | mean CPU % | p95 CPU % | mean RSS MB | max RSS MB |
+|---|---|---|---|---|
+| 36 | 0.42 | 3.4 | 169.5 | 264.1 |
+
+Limits: one run, dev build (not packaged), no stock baseline on the same build yet, so D37's pass rule
+(fork within stock noise) is **not yet decided**. Next: the same command on an upstream checkout at `c175749a`, five runs each.
