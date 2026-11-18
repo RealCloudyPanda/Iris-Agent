@@ -28,18 +28,24 @@ function unquote(raw) {
   return Buffer.from(bytes).toString("utf8");
 }
 
-/** Added lines per file from `git diff -U0` output; binary files carry no `+` lines and so drop out. */
+/** Added lines per file from `git diff -U0` output; binary files carry no `+` lines and so drop out.
+ * `---`/`+++` are file headers only before a file's first `@@`: inside a hunk, an added line reading `++ x` is `+++ x`. */
 export function addedLines(diff) {
   const found = [];
   let file = null;
+  let inHunk = false;
   let line = 0;
   for (const text of diff.split("\n")) {
-    if (text.startsWith("+++ ")) {
+    if (text.startsWith("diff --git ")) {
+      file = null;
+      inHunk = false;
+    } else if (!inHunk && text.startsWith("+++ ")) {
       const target = text.slice(4);
       file = target === "/dev/null" ? null : unquote(target).replace(/^b\//, "");
     } else if (text.startsWith("@@ ")) {
+      inHunk = true;
       line = Number(/\+(\d+)/.exec(text)[1]);
-    } else if (file && text.startsWith("+")) {
+    } else if (inHunk && file && text.startsWith("+")) {
       found.push({ file, line, text: text.slice(1) });
       line += 1;
     }

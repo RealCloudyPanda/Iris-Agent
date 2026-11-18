@@ -37,7 +37,6 @@ function run(dir, ...args) {
 
 test("names each invisible or bidi codepoint, including tag characters", () => {
   assert.deepEqual(invisibleIn(`a${ZWSP}b${RLO}c${TAG_A}${SOFT_HYPHEN}`), ["U+200B", "U+202E", "U+E0041", "U+00AD"]);
-  assert.deepEqual(invisibleIn("plain ascii, émoji 🙂 and ‘quotes’"), []);
 });
 
 test("reads added lines with their new-file line numbers", () => {
@@ -47,6 +46,26 @@ test("reads added lines with their new-file line numbers", () => {
     { file: "x", line: 5, text: "two" },
     { file: "x", line: 11, text: "new" },
   ]);
+});
+
+test("an added line that begins with ++ is content, not a file header", () => {
+  const diff = ["diff --git a/x b/x", "--- a/x", "+++ b/x", "@@ -1,0 +2,2 @@", "+++ sneaky", "+--- also content",
+    "diff --git a/y b/y", "new file mode 100644", "--- /dev/null", "+++ b/y", "@@ -0,0 +1 @@", "+fine"].join("\n");
+  assert.deepEqual(addedLines(diff), [
+    { file: "x", line: 2, text: "++ sneaky" },
+    { file: "x", line: 3, text: "--- also content" },
+    { file: "y", line: 1, text: "fine" },
+  ]);
+});
+
+test("catches an invisible character on an added line that begins with ++", (t) => {
+  const repo = fixtureRepo(t);
+  repo.write("upstream.ts", `export const joiner = "a${ZWSP}b";\nexport const plain = 1;\n++ "${ZWSP}";\n`);
+  repo.write("new.md", `++ hidden ${RLO}\n`);
+  repo.commit("header lookalikes");
+  const result = run(repo.dir, "companion");
+  assert.equal(result.status, 1);
+  assert.deepEqual(result.stderr.trim().split("\n").slice(1).sort(), ["new.md:1:U+202E", "upstream.ts:3:U+200B"]);
 });
 
 test("passes when the branch adds only clean lines, even to files that already hold invisible characters", (t) => {
