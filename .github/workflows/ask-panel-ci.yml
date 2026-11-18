@@ -1,0 +1,47 @@
+# The fork's only workflow: GitHub-hosted runners, no secrets, no provider calls (docs/ask-panel/DECISIONS.md D38, D44).
+name: Ask panel CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ask-panel-ci-${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: lint, typecheck, tests, invisible characters
+    runs-on: macos-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The invisible-character check diffs against the base branch, so it needs full history.
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+      # pnpm comes from package.json's packageManager through corepack; setup-node's pnpm cache needs it on PATH first.
+      - run: corepack enable
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: No invisible or bidi characters in added lines
+        env:
+          BASE_REF: ${{ github.base_ref }}
+        run: |
+          node --test scripts/check-invisible-chars.node-test.mjs
+          node scripts/check-invisible-chars.mjs ${BASE_REF:+"origin/$BASE_REF"}
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test:electron
+      - name: Focused server tests
+        run: pnpm exec vitest run server/turn-images server/drivers/codex-images server/routes/threads server/attachments server/request-auth

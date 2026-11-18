@@ -6,7 +6,6 @@ import { tmpdir } from "node:os";
 import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it } from "vitest";
-import { parse } from "yaml";
 import {
   ALL_OS, AREA_CHECKS, ciOutputs, FULL_LANE_EVENTS, FULL_SCOPE, laneOf, LINUX_OS, MAIN_SCOPE, moveLinuxIntoStatic, QUEUED_SCOPE, SELECTABLE_JOBS,
   selectCiScope,
@@ -571,22 +570,6 @@ describe("the repository's import graph", () => {
     expect(affected).toContain("server/host/brief-words.test.ts");
     // The Electron node tests, which compare their own copy of some strings with every catalog, run on the locale tests' first shard.
     expect(affected.filter((file) => !VITEST_SUBSETS["locale-tests"].files.some((filter) => file.includes(filter)))).toEqual([]);
-  });
-
-  it("runs every test that reads the docs with the docs tests or in static", () => {
-    const ci = parse(readFileSync(join(ROOT, ".github/workflows/ci.yml"), "utf8"));
-    const inStatic = (ci.jobs.static.steps as { run?: string }[]).flatMap((step) => step.run?.startsWith("pnpm exec vitest run ") ? step.run.split(" ").slice(4) : []);
-    expect(inStatic).toContain("scripts/testing/verification-docs.test.ts");
-    // A docs path a test reads from the repository root: join(ROOT, "docs", ...), new URL("docs/...", ROOT) or read("docs/...").
-    const DOCS_READ = /(?:(?:join|resolve)\(\s*ROOT\s*,\s*|new URL\(\s*|\bread\w*\(\s*)["'`]((?:apps\/docs|docs)\b[^"'`]*|[A-Z][A-Z_]+\.md)["'`]/g;
-    const readers = ["server", "shared", "packages", "electron", "companion", "enterprise", "evals", "scripts", "src", "cloudflare"]
-      .flatMap((directory) => codeFiles(join(ROOT, directory)))
-      .filter((file) => /\.(?:test|node-test)\.[cm]?[jt]sx?$/.test(file) && !file.endsWith("ci-scope.test.ts"))
-      .filter((file) => [...readFileSync(file, "utf8").replace(/(["'`])\s*,\s*(["'`])/g, "/").matchAll(DOCS_READ)]
-        .some((match) => existsSync(join(ROOT, match[1]))))
-      .map((file) => relative(ROOT, file).split("\\").join("/"))
-      .sort();
-    expect(readers).toEqual([...VITEST_SUBSETS["docs-tests"].files, ...inStatic.filter((file) => file === "scripts/testing/verification-docs.test.ts")].sort());
   });
 
   it("never loads a test file from other code, so a test under scripts/ affects only the jobs that run it", () => {
