@@ -23,7 +23,10 @@ function harness({ bots = BOTS, saved = {}, uploadOk = true } = {}) {
   h.request = async (route, init = {}) => {
     h.requests.push({ route, init });
     if (route === "/api/bots?messages=0") return json({ bots });
-    if (route.endsWith("/tasks")) return json({ task: { threadId: "thread-1" } });
+    if (route.endsWith("/tasks")) {
+      const bot = bots.find(entry => route === `/api/bots/${entry.id}/tasks`);
+      return json({ task: { threadId: "thread-1", modelSelection: h.newThreadModel ?? bot.modelSelection, followsBotModel: !h.newThreadModel } });
+    }
     if (route.startsWith("/api/attachments")) return uploadOk ? json({ path: "/data/attachments/a\"b.png", mime: "image/png", bytes: 3 }) : new Response("no", { status: 500 });
     if (route === "/api/events?screens=off") return new Response(h.stream.body, { status: 200 });
     if (route.endsWith("/messages")) return json({ ok: true });
@@ -100,15 +103,48 @@ test("no capture means no upload", async () => {
   assert.equal(JSON.parse(h.posted("/api/bots/codex-bot/messages")[0].init.body).text, "hi");
 });
 
-test("a capture is never uploaded for a bot that cannot see images, and is still dropped", async () => {
+test("a capture is never uploaded for a bot that cannot see images: the ask is refused and the capture dropped", async () => {
   const h = harness();
   await h.ask.chooseWindow("window:1:0");
-  const sent = h.ask.send({ botId: "maus", text: "hi" });
+  assert.deepEqual(await h.ask.send({ botId: "maus", text: "hi" }), { ok: false, error: "image-engine" });
   assert.equal(h.ask.held(), false);
-  await h.answer("id-1");
-  await sent;
   assert.equal(h.posted("/api/attachments").length, 0);
-  assert.equal(JSON.parse(h.posted("/api/bots/maus/messages")[0].init.body).text, "hi");
+  assert.equal(h.posted("/api/bots/maus/messages").length, 0);
+});
+
+test("a Codex bot whose saved Quick asks thread runs on another engine gets no image", async () => {
+  const bots = [{ ...BOTS[0], tasks: [{ threadId: "thread-1", modelSelection: { instanceId: "claude" }, followsBotModel: false }] }];
+  const h = harness({ bots, saved: { chats: { "srv\ncodex-bot": "thread-1" } } });
+  await h.ask.chooseWindow("window:1:0");
+  assert.deepEqual(await h.ask.send({ botId: "codex-bot", text: "hi" }), { ok: false, error: "image-engine" });
+  assert.equal(h.posted("/api/attachments").length, 0);
+  assert.equal(h.posted("/api/bots/codex-bot/messages").length, 0);
+});
+
+test("a new Quick asks thread on another engine than its Codex bot gets no image", async () => {
+  const h = harness();
+  h.newThreadModel = { instanceId: "claude" };
+  await h.ask.chooseWindow("window:1:0");
+  assert.deepEqual(await h.ask.send({ botId: "codex-bot", text: "hi" }), { ok: false, error: "image-engine" });
+  assert.equal(h.posted("/api/attachments").length, 0);
+});
+
+test("a thread whose engine is not reported gets no image", async () => {
+  const bots = [{ ...BOTS[0], tasks: [{ threadId: "thread-1" }] }];
+  const h = harness({ bots, saved: { chats: { "srv\ncodex-bot": "thread-1" } } });
+  await h.ask.chooseWindow("window:1:0");
+  assert.deepEqual(await h.ask.send({ botId: "codex-bot", text: "hi" }), { ok: false, error: "image-engine" });
+});
+
+test("a non-Codex bot whose saved Quick asks thread runs on Codex does get the image", async () => {
+  const bots = [{ ...BOTS[1], tasks: [{ threadId: "thread-1", modelSelection: { instanceId: "codex" }, followsBotModel: false }] }];
+  const h = harness({ bots, saved: { chats: { "srv\nmaus": "thread-1" } } });
+  await h.ask.chooseWindow("window:1:0");
+  const sent = h.ask.send({ botId: "maus", text: "hi" });
+  await h.answer("id-2");
+  assert.deepEqual(await sent, { ok: true });
+  assert.equal(h.posted("/api/attachments").length, 1);
+  assert.match(JSON.parse(h.posted("/api/bots/maus/messages")[0].init.body).text, /<attached-image path=/);
 });
 
 test("clearCapture drops the buffer and tells the panel", async () => {
@@ -120,7 +156,7 @@ test("clearCapture drops the buffer and tells the panel", async () => {
 });
 
 test("a saved Quick asks thread is reused; a second ask while busy is refused", async () => {
-  const bots = [{ ...BOTS[0], tasks: [{ threadId: "thread-1" }] }];
+  const bots = [{ ...BOTS[0], tasks: [{ threadId: "thread-1", modelSelection: { instanceId: "codex" } }] }];
   const h = harness({ bots, saved: { chats: { "srv\ncodex-bot": "thread-1" } } });
   const first = h.ask.send({ botId: "codex-bot", text: "one" });
   assert.equal(h.ask.busy(), true);

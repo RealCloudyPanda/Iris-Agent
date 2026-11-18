@@ -52,7 +52,7 @@ label{display:flex;gap:6px;align-items:center;color:var(--ink2)}
 const api=window.ask,$=id=>document.getElementById(id);
 const bot=$("bot"),q=$("q"),inc=$("inc"),picker=$("picker"),chip=$("chip"),status=$("status"),reply=$("reply");
 const STATES={sending:"Sending…",thinking:"Thinking…","needs-you":"Needs you · Open chat",done:"Done",error:"Something went wrong"};
-const ERRORS={busy:"Still answering the last ask.","server-down":"MausBot's server is not reachable.",starting:"MausBot is starting.",refused:"The server refused the ask.",moved:"This computer's bots moved to My Cloud.",lost:"Lost the connection; the reply is in the chat.",upload:"The screenshot could not be uploaded.","no-bot":"That bot is gone.",failed:"The turn failed."};
+const ERRORS={busy:"Still answering the last ask.","server-down":"MausBot's server is not reachable.",starting:"MausBot is starting.",refused:"The server refused the ask.",moved:"This computer's bots moved to My Cloud.",lost:"Lost the connection; the reply is in the chat.",upload:"The screenshot could not be uploaded.","image-engine":"This chat's model can't see images. Send without the window or pick a Codex bot.","no-bot":"That bot is gone.",failed:"The turn failed."};
 let bots=[],busy=false,captured=false,pick=0;
 const capable=()=>bots.find(b=>b.id===bot.value)?.imageCapable===true;
 function syncToggle(){const ok=capable();inc.disabled=!ok;$("why").textContent=ok?"":"This bot can't see images";if(!ok&&inc.checked){inc.checked=false;toggled()}bot.disabled=busy}

@@ -19,6 +19,9 @@ export function escapeAttribute(value) {
 
 export const imageTag = path => `<attached-image path="${escapeAttribute(path)}" name="window.png" />`;
 
+/** A wire task carries the model its thread runs on (its own pick or its bot's); unknown counts as no. */
+export const threadSeesImages = task => task?.modelSelection?.instanceId === "codex";
+
 /** Last bot and each bot's Quick asks thread, per server, in a small JSON file. */
 export function createAskPrefs(store, log = () => {}) {
   let data = null;
@@ -59,14 +62,15 @@ export function createAsk({ request, prefs, serverKey, capture, push, makeId = r
   const ensureThread = async bot => {
     const key = serverKey();
     const saved = prefs.thread(key, bot.id);
-    if (saved && bot.tasks?.some(task => task.threadId === saved)) return { botId: bot.id, threadId: saved };
+    const known = saved ? bot.tasks?.find(task => task.threadId === saved) : undefined;
+    if (known) return { chat: { botId: bot.id, threadId: saved }, task: known };
     const made = await request(`/api/bots/${encodeURIComponent(bot.id)}/tasks`, {
       method: "POST", headers: JSON_HEADERS, body: JSON.stringify({ title: QUICK_ASKS_TITLE, select: false }),
     }).catch(() => null);
-    const threadId = made?.ok ? (await made.json().catch(() => null))?.task?.threadId : null;
-    if (typeof threadId !== "string") throw new TalkServerError("refused");
-    prefs.setThread(key, bot.id, threadId);
-    return { botId: bot.id, threadId };
+    const task = made?.ok ? (await made.json().catch(() => null))?.task : null;
+    if (typeof task?.threadId !== "string") throw new TalkServerError("refused");
+    prefs.setThread(key, bot.id, task.threadId);
+    return { chat: { botId: bot.id, threadId: task.threadId }, task };
   };
   const upload = async png => {
     const response = await request(`/api/attachments?uploadId=${encodeURIComponent(makeId())}`, {
@@ -82,9 +86,11 @@ export function createAsk({ request, prefs, serverKey, capture, push, makeId = r
     const bot = (await fetchBots()).find(entry => entry.id === botId);
     if (!bot) throw new TalkServerError("no-bot");
     prefs.setLastBot(bot.id);
-    const chat = await ensureThread(bot);
+    const { chat, task } = await ensureThread(bot);
     lastChat = chat;
-    const message = png && bot.modelSelection?.instanceId === "codex" ? `${text}\n\n${imageTag(await upload(png))}` : text;
+    // The thread may run on a model of its own; an image goes only to a thread whose engine is known to read images.
+    if (png && !threadSeesImages(task)) throw new TalkServerError("image-engine");
+    const message = png ? `${text}\n\n${imageTag(await upload(png))}` : text;
     const outcome = await server.ask({
       chat, text: message, sendId: makeId(), signal,
       onUpdate: update => {
