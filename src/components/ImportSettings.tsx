@@ -5,6 +5,7 @@ import { useContext, useEffect, useState, type ReactNode } from "react";
 import { SettingRow, SettingsLook, SettingsMark, SettingsRows, Switch } from "./SettingsPrimitives";
 
 import { track } from "@/lib/analytics";
+import { GROK_MOVE_OFFERED } from "@/lib/notices";
 import { cn } from "@/lib/cn";
 import { t } from "@/lib/i18n";
 import { importOutcome, localSetupImport, setupImportApi, skillsSummary, toolsSummary, type SetupImportClient } from "@/lib/setup-import";
@@ -246,7 +247,7 @@ export function ImportSettings({ client = setupImportApi, children }: { client?:
   if (useContext(SettingsLook)) {
     return (
       <SettingsRows>
-        <GrokImportSection />
+        {GROK_MOVE_OFFERED && <GrokImportSection />}
         <AiAppsImport client={client} local={localSetupImport(state.config?.cloudHome === true)} />
         {children}
       </SettingsRows>
@@ -254,7 +255,7 @@ export function ImportSettings({ client = setupImportApi, children }: { client?:
   }
   return (
     <div className="flex flex-col gap-4">
-      <GrokImportSection />
+      {GROK_MOVE_OFFERED && <GrokImportSection />}
       <AiAppsImport client={client} local={localSetupImport(state.config?.cloudHome === true)} />
       {children}
     </div>

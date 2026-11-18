@@ -14,7 +14,7 @@ import { buyOfferAllowed, cloudNoticeKind, cloudPlanView, cloudTrialNotice, clou
 import { jobRoutine, useCloudIntent } from "@/lib/cloud-intent";
 import { CLOUD_INTENT_GIVEN, cloudSetupStage } from "@/lib/cloud-setup";
 import { cornerPopupWaits, firstChatQuiet, firstReplyPending } from "@/lib/corner-popup";
-import { ANNOUNCEMENT_NOTICE, BOAT_OFFER_NOTICE, CLOUD_INTRO, CLOUD_NOTICE, CLOUD_TRIAL_NOTICE, dismissNotice, dismissNotices, GROK_MOVE_NOTICE, introShown, introStage, launchNotice, markLaunchNotice, MODELGO_OFFER_NOTICE, nextNotice, noticeSeen, PHONE_UPDATE_NOTICE, phoneUpdateHint, PRODUCT_HUNT_NOTICE, PRODUCT_HUNT_UNTIL, PRODUCT_HUNT_URL, SIMPLE_MODE_NOTICE, STAR_NOTICE, TEAMS_NOTICE, TWO_PLACES_NOTICE, UPDATES_CONSENT_NOTICE, usedBefore, WHATS_NEW_NOTICE } from "@/lib/notices";
+import { ANNOUNCEMENT_NOTICE, BOAT_OFFER_NOTICE, CLOUD_INTRO, CLOUD_NOTICE, CLOUD_TRIAL_NOTICE, dismissNotice, dismissNotices, GROK_MOVE_NOTICE, GROK_MOVE_OFFERED, introShown, introStage, launchNotice, markLaunchNotice, MODELGO_OFFER_NOTICE, nextNotice, noticeSeen, PHONE_UPDATE_NOTICE, phoneUpdateHint, PRODUCT_HUNT_NOTICE, PRODUCT_HUNT_UNTIL, PRODUCT_HUNT_URL, SIMPLE_MODE_NOTICE, STAR_NOTICE, TEAMS_NOTICE, TWO_PLACES_NOTICE, UPDATES_CONSENT_NOTICE, usedBefore, WHATS_NEW_NOTICE } from "@/lib/notices";
 import { rememberNoticeSeen } from "@/lib/announcement-history";
 import { reportTeams, teamsAction } from "@/lib/teams-whats-new";
 import { useTwoPlaces } from "@/lib/two-places";
@@ -201,7 +201,7 @@ export function AppNotices({ quiet = false, viewer = null, now = Date.now }: { q
   const consentNow = consentWaits === true || consentFact === false ? false : consentWaits === null || mausBotFirst ? null : consentFact;
   // The Grok Bot popup: once for everyone who can add a bot, the one thing a first chat may be interrupted by. Nothing reads
   // this computer for it: GrokMoveDialog does that, once opened.
-  const grokDue = !remote && viewer?.canSave !== false && !state.config?.team && brandStatus().source !== "file" && organization !== true && moving !== true
+  const grokDue = GROK_MOVE_OFFERED && !remote && viewer?.canSave !== false && !state.config?.team && brandStatus().source !== "file" && organization !== true && moving !== true
     && launchDialogShown() !== "mausbot" && !noticeSeen(record, GROK_MOVE_NOTICE) && !desktopState?.seen.includes(GROK_MOVE_NOTICE);
   const grokBlocked = useOtherDialogOpen(grokDue) || Boolean(state.liveCall && state.liveCall.status !== "ended");
   const grokLanding = welcomeFinishedThisLaunch() && !grokLanded;
