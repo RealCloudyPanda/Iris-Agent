@@ -8,6 +8,7 @@ import type { Switch } from "../SettingsPrimitives";
 const fixture = vi.hoisted(() => ({
   section: "overview" as AppSettingsSection,
   advanced: false,
+  grok: false,
   admin: true as boolean | null,
   config: {} as Record<string, unknown>,
   setAdvancedMode: vi.fn(),
@@ -19,6 +20,12 @@ vi.mock("@/state/store", async (importOriginal) => ({
   api: vi.fn(() => new Promise(() => {})),
   useStore: () => ({ state: { appSettingsSection: fixture.section, appSettingsPhonePairing: 0, appSettingsCloudLink: 0, instances: [], bots: [], config: fixture.config, activeView: "chat" }, dispatch: fixture.dispatch }),
 }));
+// The Grok move is built but not offered in Iris Agent (GROK_MOVE_OFFERED is
+// false); the tests of its dormant row turn the offer on for themselves.
+vi.mock("@/lib/notices", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/lib/notices")>();
+  return { ...original, get GROK_MOVE_OFFERED() { return fixture.grok; } };
+});
 vi.mock("@/lib/interface-mode", () => ({ useAdvancedMode: () => fixture.advanced, setAdvancedMode: fixture.setAdvancedMode }));
 vi.mock("@/lib/use-owner-or-admin", () => ({ useOwnerOrAdmin: () => fixture.admin }));
 vi.mock("@/lib/analytics", () => ({ analyticsEnabled: () => false, setAnalyticsEnabled: vi.fn(), track: vi.fn() }));
@@ -38,6 +45,7 @@ beforeEach(() => {
   vi.clearAllMocks();
   fixture.section = "overview";
   fixture.advanced = false;
+  fixture.grok = false;
   fixture.admin = true;
   fixture.config = {};
   fixture.switches = [];
@@ -72,9 +80,9 @@ describe("the Settings window", () => {
   it("says which place a place page changes, and that account and app pages stay the same, without “place” for a person with one place", () => {
     expect(render("phone")).toContain("This computer");
     const account = render("account");
-    expect(account).toContain("Your MausBot account");
+    expect(account).toContain("Your Iris Agent account");
     expect(account).not.toContain("Same on every place");
-    expect(render("appearance")).toContain("MausBot on this device");
+    expect(render("appearance")).toContain("Iris Agent on this device");
   });
 
   // Owner decisions (Nov 11, Nov 12): Simple's nav is shorter. Nine entries, the same for every person and every rail.
@@ -112,18 +120,28 @@ describe("the Settings window", () => {
   const order = (html: string, marks: string[]) => marks.map((mark) => html.indexOf(mark));
   const ascending = (places: number[]) => places.every((at, index) => at >= 0 && (index === 0 || at > places[index - 1]!));
   describe.each([["Simple", false], ["Advanced", true]] as const)("Import & export in %s", (_mode, advanced) => {
-    beforeEach(() => { fixture.advanced = advanced; });
+    beforeEach(() => { fixture.advanced = advanced; fixture.grok = true; });
+
+    it("holds no Grok row while the Grok move is not offered", () => {
+      fixture.grok = false;
+      const html = render("transfer");
+      expect(ascending(order(html, ['data-settings-block="bring-in"', 'data-import-section="apps"', "From your AI apps", "Import backup",
+        'data-settings-block="take-out"', "Export full backup"]))).toBe(true);
+      expect(html).not.toContain('data-import-section="grok"');
+      expect(html).not.toContain("Move from Grok");
+      expect(html).not.toContain("data-grok-move");
+    });
 
     it("is in the menu and holds Bring things in, then Take things out, in the owner's order", () => {
       const html = render("transfer");
       expect(html).toMatch(/data-settings-page="transfer"[^>]*>[\s\S]*?Import &amp; export/);
       expect(html).toMatch(/<h2[^>]*>Import &amp; export<\/h2>/);
-      expect(ascending(order(html, ['data-settings-block="bring-in"', 'data-import-section="grok"', "Move from Grok Bot", 'data-import-section="apps"',
+      expect(ascending(order(html, ['data-settings-block="bring-in"', 'data-import-section="grok"', "Move from Grok", 'data-import-section="apps"',
         "From your AI apps", "Import backup", 'data-settings-block="take-out"', "Export full backup"]))).toBe(true);
       expect(html).not.toContain("Bring in a bot from another app");
     });
 
-    it("draws the Grok Bot mark in the row's leading slot, and opens nothing until Start is pressed", () => {
+    it("draws the Grok mark in the row's leading slot, and opens nothing until Start is pressed", () => {
       const html = render("transfer");
       const row = html.slice(html.indexOf('data-import-section="grok"'), html.indexOf('data-import-section="apps"'));
       expect(row).toMatch(/data-settings-slot=""[^>]*>\s*<span aria-hidden="true"[^>]*>\s*<svg[^>]*viewBox="0 0 70 70"/);
@@ -140,15 +158,15 @@ describe("the Settings window", () => {
     it("shows on My Cloud in a browser, to a team's admin, and not at all to a team's member", () => {
       vi.stubGlobal("window", {});
       fixture.config = { cloudHome: true };
-      expect(render("transfer")).toContain("Move from Grok Bot");
+      expect(render("transfer")).toContain("Move from Grok");
       fixture.config = { cloudHome: true, team: { name: "Acme" } };
       expect(navPages(render("overview"))).toContain("transfer");
-      expect(render("transfer")).toContain("Move from Grok Bot");
+      expect(render("transfer")).toContain("Move from Grok");
       fixture.admin = false;
       expect(navPages(render("overview"))).not.toContain("transfer");
       const member = render("import");
       expect(member).toMatch(/data-settings-page-open="overview"/);
-      expect(member).not.toContain("Move from Grok Bot");
+      expect(member).not.toContain("Move from Grok");
       expect(member).not.toContain("data-backup-export");
     });
 

@@ -1,10 +1,18 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { StoreContext } from "@/state/store";
 import type { SetupDetection } from "../../shared/setup-import";
 import { AiAppsImportView, ImportSettings, type AiAppsImportViewProps } from "./ImportSettings";
+
+// The Grok move is built but not offered in Iris Agent (GROK_MOVE_OFFERED is
+// false); a test that checks the dormant row turns the offer on for itself.
+const offer = vi.hoisted(() => ({ grok: false }));
+vi.mock("@/lib/notices", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/lib/notices")>();
+  return { ...original, get GROK_MOVE_OFFERED() { return offer.grok; } };
+});
 
 const text = (markup: string) => markup.replace(/<[^>]+>/g, " ").replace(/&#x27;/g, "'").replace(/&amp;/g, "&").replace(/\s+/g, " ");
 const FOUND: SetupDetection = {
@@ -15,19 +23,32 @@ const apps = (overrides: Partial<AiAppsImportViewProps> = {}) => text(renderToSt
   local: true, detection: FOUND, chosen: { skills: true, tools: true }, status: "idle", result: null, onChoose: vi.fn(), onBring: vi.fn(), ...overrides,
 })));
 
+const importPage = () => renderToStaticMarkup(createElement(StoreContext.Provider, { value: { state: { config: {} }, dispatch: vi.fn() } as never }, createElement(ImportSettings, {
+  client: { detect: vi.fn(() => new Promise<SetupDetection>(() => {})), apply: vi.fn() },
+})));
+
 describe("Settings → Import", () => {
-  it("draws From your AI apps and the one button for moving from Grok Bot, and opens nothing until it is pressed", () => {
-    const value = { state: { config: {} }, dispatch: vi.fn() } as never;
-    const markup = renderToStaticMarkup(createElement(StoreContext.Provider, { value }, createElement(ImportSettings, {
-      client: { detect: vi.fn(() => new Promise<SetupDetection>(() => {})), apply: vi.fn() },
-    })));
+  afterEach(() => { offer.grok = false; });
+
+  it("draws From your AI apps and no Grok row while the Grok move is not offered", () => {
+    const markup = importPage();
+    expect(markup).toContain('data-import-section="apps"');
+    expect(text(markup)).toContain("From your AI apps");
+    expect(markup).not.toContain('data-import-section="grok"');
+    expect(text(markup)).not.toContain("Move from Grok");
+    expect(markup).not.toContain("data-grok-move");
+  });
+
+  it("when offered, draws From your AI apps and the one button for moving from Grok, and opens nothing until it is pressed", () => {
+    offer.grok = true;
+    const markup = importPage();
     expect(markup).toContain('data-import-section="apps"');
     expect(markup).toContain('data-import-section="grok"');
     const shown = text(markup);
     expect(shown).toContain("From your AI apps");
     expect(shown).toContain("Claude Code, Codex, Cursor, Claude Desktop and Gemini");
     expect(shown).toContain("Tools arrive switched off; logins and history are never read.");
-    expect(shown).toContain("Move from Grok Bot");
+    expect(shown).toContain("Move from Grok");
     expect(markup).toContain("data-grok-move-open");
     expect(markup).not.toContain("data-grok-move=");
     expect(markup.indexOf('data-import-section="grok"')).toBeLessThan(markup.indexOf('data-import-section="apps"'));
@@ -44,7 +65,7 @@ describe("Settings → Import", () => {
   it("says what happened: looking, nothing new, not this computer, or the result", () => {
     expect(apps({ detection: undefined })).toContain("Looking on this computer…");
     expect(apps({ detection: { skills: [], tools: [] } })).toContain("Nothing new to bring in from your AI apps.");
-    expect(apps({ local: false })).toContain("Only the desktop app on the computer running MausBot");
+    expect(apps({ local: false })).toContain("Only the desktop app on the computer running Iris Agent");
     expect(apps({ result: { skills: { added: ["pdf"], present: [], skipped: [], filesLeftOut: 0, review: [] } } })).toContain("Added 1 skill.");
   });
 });

@@ -1,5 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/state/store", () => ({ api: vi.fn() }));
+// The Grok move is built but not offered in Iris Agent (GROK_MOVE_OFFERED is
+// false); one test turns the offer on to check the rules it would follow.
+const offer = vi.hoisted(() => ({ grok: false }));
+vi.mock("@/lib/notices", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@/lib/notices")>();
+  return { ...original, get GROK_MOVE_OFFERED() { return offer.grok; } };
+});
 import { api } from "@/state/store";
 import { EMPTY_ONBOARDING, type OnboardingStatus } from "@/lib/onboarding";
 import { BOAT_OFFER_NOTICE, CLOUD_INTRO, GROK_MOVE_NOTICE, MODELGO_OFFER_NOTICE, PRODUCT_HUNT_NOTICE, PRODUCT_HUNT_UNTIL, TEAMS_NOTICE, WHATS_NEW_NOTICE } from "@/lib/notices";
@@ -21,12 +28,13 @@ beforeEach(() => {
   storage = new Map();
   vi.stubGlobal("localStorage", { getItem: (key: string) => storage.get(key) ?? null, setItem: (key: string, value: string) => storage.set(key, value) });
   vi.mocked(api).mockReset();
+  offer.grok = false;
 });
 afterEach(() => vi.unstubAllGlobals());
 
 describe("the built-in announcements", () => {
   it("are one registry, each with its notice id, a date and its words, newest first, Teams at the top", () => {
-    expect(ids(desktopHere)).toEqual([TEAMS_NOTICE, MODELGO_OFFER_NOTICE, GROK_MOVE_NOTICE, WHATS_NEW_NOTICE, BOAT_OFFER_NOTICE, PRODUCT_HUNT_NOTICE, CLOUD_INTRO]);
+    expect(ids(desktopHere)).toEqual([TEAMS_NOTICE, MODELGO_OFFER_NOTICE, WHATS_NEW_NOTICE, BOAT_OFFER_NOTICE, PRODUCT_HUNT_NOTICE, CLOUD_INTRO]);
     for (const entry of BUILT_IN_ANNOUNCEMENTS) expect(Number.isFinite(Date.parse(entry.date)), entry.id).toBe(true);
     expect(BUILT_IN_ANNOUNCEMENTS.find(entry => entry.id === TEAMS_NOTICE)?.open).toEqual({ modal: "teams" });
   });
@@ -37,11 +45,21 @@ describe("the built-in announcements", () => {
       .toEqual([MODELGO_OFFER_NOTICE, BOAT_OFFER_NOTICE]);
     expect(ids({ ...desktopHere, organization: null }), "while that is read, nothing else").toEqual([MODELGO_OFFER_NOTICE, BOAT_OFFER_NOTICE]);
     const browser: HistoryFacts = { ...desktopHere, cloudSale: false, cloudCards: false };
-    expect(ids(browser), "a browser: no Cloud sales").toEqual([TEAMS_NOTICE, MODELGO_OFFER_NOTICE, GROK_MOVE_NOTICE, BOAT_OFFER_NOTICE]);
+    expect(ids(browser), "a browser: no Cloud sales").toEqual([TEAMS_NOTICE, MODELGO_OFFER_NOTICE, BOAT_OFFER_NOTICE]);
     const member: HistoryFacts = { ...browser, team: true, canSave: false, sponsors: false };
     expect(ids(member), "a Team Cloud's member: Teams alone").toEqual([TEAMS_NOTICE]);
-    expect(ids({ ...member, canSave: true, sponsors: true }), "its admin: the sponsor offers too, never the Grok Bot move")
+    expect(ids({ ...member, canSave: true, sponsors: true }), "its admin: the sponsor offers too, never the Grok move")
       .toEqual([TEAMS_NOTICE, MODELGO_OFFER_NOTICE, BOAT_OFFER_NOTICE]);
+  });
+
+  it("list the Grok move, when it is offered, after the ModelGo offer, on this computer and in a browser, never to a Team Cloud", () => {
+    expect(ids(desktopHere), "not offered: listed nowhere").not.toContain(GROK_MOVE_NOTICE);
+    offer.grok = true;
+    expect(ids(desktopHere)).toEqual([TEAMS_NOTICE, MODELGO_OFFER_NOTICE, GROK_MOVE_NOTICE, WHATS_NEW_NOTICE, BOAT_OFFER_NOTICE, PRODUCT_HUNT_NOTICE, CLOUD_INTRO]);
+    const browser: HistoryFacts = { ...desktopHere, cloudSale: false, cloudCards: false };
+    expect(ids(browser)).toEqual([TEAMS_NOTICE, MODELGO_OFFER_NOTICE, GROK_MOVE_NOTICE, BOAT_OFFER_NOTICE]);
+    expect(ids({ ...browser, team: true })).not.toContain(GROK_MOVE_NOTICE);
+    expect(ids({ ...desktopHere, remote: true })).not.toContain(GROK_MOVE_NOTICE);
   });
 
   it("an offer whose time is over is Ended; one still running is not", () => {
@@ -56,7 +74,7 @@ describe("the built-in announcements", () => {
   it("a card from the file sits by its starts, else by when the file changed, among them", () => {
     const cards = [card("later", { starts: "2026-11-20T00:00:00Z" }), card("undated"), card("old", { starts: "2026-10-20T00:00:00Z" })];
     expect(ids(desktopHere, cards, Date.parse("2026-11-12T00:00:00Z")))
-      .toEqual(["later", TEAMS_NOTICE, "undated", MODELGO_OFFER_NOTICE, GROK_MOVE_NOTICE, WHATS_NEW_NOTICE, BOAT_OFFER_NOTICE, "old", PRODUCT_HUNT_NOTICE, CLOUD_INTRO]);
+      .toEqual(["later", TEAMS_NOTICE, "undated", MODELGO_OFFER_NOTICE, WHATS_NEW_NOTICE, BOAT_OFFER_NOTICE, "old", PRODUCT_HUNT_NOTICE, CLOUD_INTRO]);
   });
 });
 

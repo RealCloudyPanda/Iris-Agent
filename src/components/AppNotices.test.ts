@@ -13,8 +13,14 @@ import { launchDialogShown, markLaunchDialog } from "@/lib/launch-dialogs";
 import { createDesktopPrefs, registerDesktopPrefs } from "../../electron/desktop-prefs.mjs";
 import { createUpdatesConsent, registerUpdatesConsent } from "../../electron/updates-consent.mjs";
 
-const f = vi.hoisted(() => ({ values: [] as unknown[], index: 0, effects: [] as EffectCallback[], state: {} as any, updater: null as any, dispatch: null as any, brand: "default",
+const f = vi.hoisted(() => ({ grok: false, values: [] as unknown[], index: 0, effects: [] as EffectCallback[], state: {} as any, updater: null as any, dispatch: null as any, brand: "default",
   viewerEmail: undefined as string | null | undefined }));
+// The Grok move is built but not offered in Iris Agent (GROK_MOVE_OFFERED is
+// false); the tests of its popup, and of its place in the queue, turn it on.
+vi.mock("@/lib/notices", async original => {
+  const notices = await original<typeof import("@/lib/notices")>();
+  return { ...notices, get GROK_MOVE_OFFERED() { return f.grok; } };
+});
 vi.mock("./Layer", () => ({ Layer: ({ children }: { children: ReactNode }) => children, useIsTopLayer: () => () => true }));
 vi.mock("react", async original => ({ ...await original<typeof import("react")>(),
   useId: () => "test-id",
@@ -29,9 +35,9 @@ vi.mock("@/lib/analytics", () => ({ emailGateDone: () => false, track: vi.fn() }
 vi.mock("@/lib/updater", () => ({ useUpdaterState: () => f.updater }));
 vi.mock("./cloud-buy/NightCard", () => ({ NightCard: ({ children }: { children: unknown }) => children }));
 vi.mock("./whats-new/TeamPicture", () => ({ TeamPicture: () => null }));
-// Who MausBot belongs to: unknown (as before the session answers) unless a test says otherwise.
+// Who Iris Agent belongs to: unknown (as before the session answers) unless a test says otherwise.
 vi.mock("@/lib/default-bot", async original => ({ ...await original<typeof import("@/lib/default-bot")>(), useViewerEmail: () => f.viewerEmail }));
-vi.mock("@/lib/brand", () => ({ brandStatus: () => ({ brand: { name: "OpenMausBot" }, source: f.brand, file: "" }), productName: () => "MausBot" }));
+vi.mock("@/lib/brand", () => ({ brandStatus: () => ({ brand: { name: "Iris Agent" }, source: f.brand, file: "" }), productName: () => "Iris Agent" }));
 vi.mock("./Avatar", async original => ({ ...await original<typeof import("./Avatar")>(), MausAvatar: () => null }));
 vi.mock("./lazy-screens", async original => ({ ...await original<typeof import("./lazy-screens")>(), GrokMoveDialog: () => "THE MOVE DIALOG" }));
 vi.mock("@/components/EngineLibrary", () => ({ engineReady: (instance: { snapshot: { state: string; authenticated?: boolean } }) =>
@@ -57,7 +63,7 @@ const plans = [
 const TRIAL_OFFER: CloudOffer = { plans, recommended: "pro", creditUsd: 5, refundDays: 14 };
 const PLAIN_OFFER: CloudOffer = { plans: plans.map(({ trialDays: _days, ...plan }) => plan), recommended: "pro", refundDays: 14 };
 const INTRO = "Keep your bots working when this computer is off";
-const STAR = "Enjoying MausBot?";
+const STAR = "Enjoying Iris Agent?";
 const signedOut: CloudAccountState = { status: "signed-out" };
 const free: CloudAccountState = { status: "connected", account: { id: "a", email: "person@example.test" }, entitlement: { plan: "free", status: "inactive", expiresAt: null, version: 1 } };
 const paid = (extra: Partial<CloudAccountState> = {}): CloudAccountState => ({ ...free, entitlement: { plan: "pro", tier: "pro", status: "active", expiresAt: NOW + 30 * DAY, version: 2 }, ...extra });
@@ -145,7 +151,7 @@ beforeEach(() => {
   // The page's announcement cards live beside the component for the session; no test inherits another's.
   forgetAnnouncementCards();
   vi.clearAllMocks(); vi.useFakeTimers({ toFake: ["setInterval", "clearInterval"] });
-  storage = new Map(); f.values = []; f.index = 0; f.effects = []; f.updater = null; f.brand = "default"; f.dispatch = vi.fn(); now = NOW; desk = desktopMachine();
+  storage = new Map(); f.grok = false; f.values = []; f.index = 0; f.effects = []; f.updater = null; f.brand = "default"; f.dispatch = vi.fn(); now = NOW; desk = desktopMachine();
   setLocale("en"); viewer = LOCAL_VIEWER; account = signedOut; snapshot = { status: "none" }; offer = TRIAL_OFFER;
   session = new Map(); f.viewerEmail = undefined;
   vi.stubGlobal("sessionStorage", { getItem: (key: string) => session.get(key) ?? null, setItem: (key: string, value: string) => session.set(key, value) });
@@ -175,7 +181,7 @@ describe("the card after the update", () => {
   it("offers the free trial to someone signed out who has used the app before, in the Admin's numbers, with Start free trial and Show me how", async () => {
     returning();
     const html = await launch();
-    const words = [INTRO, "Free for 7 days", "MausBot Cloud runs your bots for you in the cloud, always on.", "Routines run on time, day and night",
+    const words = [INTRO, "Free for 7 days", "Iris Agent Cloud runs your bots for you in the cloud, always on.", "Routines run on time, day and night",
       "Reach your bots from your phone, even with this computer off", "$5 of Claude credit to start", "Then from $15/month + tax. Cancel any time.",
       "14-day money-back on every plan.", "Start free trial", "Show me how", "Sign in to your Cloud plan", "Not now"];
     for (const text of words) expect(html).toContain(text);
@@ -439,7 +445,7 @@ describe("the Product Hunt launch card", () => {
 
 describe("Boat's credit offer", () => {
   const TITLE = "$50 of Boat credit for you";
-  const BODY = "Boat runs the cloud computers behind MausBot. Buy Boat's $100 plan or bigger, then tell Boat that MausBot sent you, and they'll add $50 in credits to your Boat account.";
+  const BODY = "Boat runs the cloud computers behind Iris Agent. Buy Boat's $100 plan or bigger, then tell Boat that Iris Agent sent you, and they'll add $50 in credits to your Boat account.";
   const YOURSELF = "You claim it yourself: it isn't automatic.";
   const CLAIM = "I bought it: claim my $50";
   const html = (text: string) => text.replace(/'/g, "&#x27;");
@@ -474,7 +480,7 @@ describe("Boat's credit offer", () => {
     expect(boatEvents()).toEqual([{ action: "shown", place: "card" }]);
   });
 
-  it("never on a first launch: not before the bots load, on a new install's first chat, in the launch its welcome or MausBot's card took", async () => {
+  it("never on a first launch: not before the bots load, on a new install's first chat, in the launch its welcome or Iris Agent's card took", async () => {
     fresh(); storage.delete(STAR_NOTICE);
     f.state.bots = [];
     expect(await launch(), "nothing said yet").not.toContain(html(TITLE));
@@ -485,7 +491,7 @@ describe("Boat's credit offer", () => {
     f.state.hydrated = true; markWelcomeFinished();
     expect(await launch(), "the launch its welcome finished in").not.toContain(html(TITLE));
     session.clear(); markLaunchDialog("mausbot");
-    expect(await launch(), "the launch MausBot's first card took").not.toContain(html(TITLE));
+    expect(await launch(), "the launch Iris Agent's first card took").not.toContain(html(TITLE));
     session.clear();
     expect(await launch()).toContain(html(TITLE));
   });
@@ -527,8 +533,8 @@ describe("Boat's credit offer", () => {
     expect(window.ogb?.openExternal).toHaveBeenCalledWith(boatClaimMailto());
     const draft = new URL(vi.mocked(window.ogb!.openExternal!).mock.calls[0]![0]);
     expect(`${draft.protocol}${draft.pathname}`).toBe("mailto:support@ascii.dev");
-    expect(draft.searchParams.get("subject")).toBe("MausBot introduced me: $50 Boat credit");
-    expect(draft.searchParams.get("body")!.replace(/\r\n/g, "\n")).toBe("Hi Boat team,\n\nMausBot introduced me to Boat. I'm on the $___ plan.\nMy Boat account email: ___\n\nThanks!");
+    expect(draft.searchParams.get("subject")).toBe("Iris Agent introduced me: $50 Boat credit");
+    expect(draft.searchParams.get("body")!.replace(/\r\n/g, "\n")).toBe("Hi Boat team,\n\nIris Agent introduced me to Boat. I'm on the $___ plan.\nMy Boat account email: ___\n\nThanks!");
     expect(vi.mocked(api).mock.calls.map(([path]) => path), "only the dismissal is saved").toEqual(["/api/config"]);
     expect(boatEvents()).toContainEqual({ action: "claim", place: "card" });
     await endedForGood();
@@ -604,7 +610,7 @@ describe("Boat's credit offer", () => {
 });
 
 describe("What's new after the update", () => {
-  const PRO = "Meet the new MausBot Cloud", TEAM = "Shared bots for your whole team";
+  const PRO = "Meet the new Iris Agent Cloud", TEAM = "Shared bots for your whole team";
   const ID = WHATS_NEW_NOTICE;
   const BOAT = "$50 of Boat credit for you";
   let modal: boolean;
@@ -741,7 +747,7 @@ describe("What's new after the update", () => {
     expect(steps().map(props => props.action)).toEqual(["seen", "not_now"]);
   });
 
-  it("a new install sees it once onboarding is done and a bot has answered, in a later launch than the welcome's, after MausBot's card", async () => {
+  it("a new install sees it once onboarding is done and a bot has answered, in a later launch than the welcome's, after Iris Agent's card", async () => {
     f.state.config.onboarding = { ...EMPTY_ONBOARDING };
     expect(on(await launch()), "onboarding not done").toBeNull();
     f.state.config.onboarding = { ...EMPTY_ONBOARDING, completedAt: "2026-10-16", version: 1, hintsSeen: [] };
@@ -754,11 +760,11 @@ describe("What's new after the update", () => {
     f.state.bots = structuredClone(FIRST_REPLY); markWelcomeFinished();
     expect(on(await launch()), "the launch the welcome finished in").toBeNull();
     session.clear(); markLaunchDialog("mausbot");
-    expect(on(await launch()), "the launch MausBot's first card took").toBeNull();
+    expect(on(await launch()), "the launch Iris Agent's first card took").toBeNull();
     expect(on(await relaunch())).toBe("pro");
   });
 
-  it("claims the launch for the popups, so MausBot's card waits for a later one", async () => {
+  it("claims the launch for the popups, so Iris Agent's card waits for a later one", async () => {
     await launch();
     expect(launchDialogShown()).toBe("notices");
   });
@@ -844,7 +850,7 @@ describe("What's new after the update", () => {
 });
 
 describe("the product-updates question after the update", () => {
-  const QUESTION = "Get MausBot updates?", POPUP = "Meet the new MausBot Cloud";
+  const QUESTION = "Get Iris Agent updates?", POPUP = "Meet the new Iris Agent Cloud";
   const RECEIPT = "R".repeat(43);
   let saved: unknown;
   let accountAnswer: { status: string; textVersion: string } | null;
@@ -903,7 +909,7 @@ describe("the product-updates question after the update", () => {
     expect(render(), "right after the popup closes, as #3379 orders it").toContain(QUESTION);
   });
 
-  it("waits while MausBot's first-launch card is due, then follows it in the same launch once it closes", async () => {
+  it("waits while Iris Agent's first-launch card is due, then follows it in the same launch once it closes", async () => {
     f.viewerEmail = null;
     f.state.bots = [{ ...structuredClone(FIRST_REPLY[0]), id: "maus", defaultBot: {} }];
     expect(await launch(), "the card is due: the question waits for it").not.toContain(QUESTION);
@@ -970,8 +976,8 @@ describe("no Use my Mac popup", () => {
   });
 });
 
-describe("the Move from Grok Bot popup", () => {
-  const TITLE = "Move from Grok Bot", WHATS_NEW = "Meet the new MausBot Cloud", DIALOG = "THE MOVE DIALOG";
+describe("the Move from Grok popup", () => {
+  const TITLE = "Move from Grok", WHATS_NEW = "Meet the new Iris Agent Cloud", DIALOG = "THE MOVE DIALOG";
   let modal: boolean;
   const events = () => vi.mocked(track).mock.calls.filter(([name]) => name === "grok_move_popup").map(([, props]) => (props as { action: string }).action);
   const reads = () => vi.mocked(api).mock.calls.map(([path]) => path).filter(path => path === "/api/setup-import/grok");
@@ -988,10 +994,20 @@ describe("the Move from Grok Bot popup", () => {
 
   beforeEach(() => {
     modal = false;
+    f.grok = true;
     storage.delete(GROK_MOVE_NOTICE);
     vi.stubGlobal("document", { activeElement: null, body: null, documentElement: { dataset: {} }, getElementById: () => null,
       querySelector: (selector: string) => selector === "[data-grok-move-popup]" ? { querySelectorAll: () => [] } : null,
       querySelectorAll: () => modal ? [{ closest: () => null, checkVisibility: () => true }] : [] });
+  });
+
+  it("is not shown at all while the Grok move is not offered", async () => {
+    f.grok = false;
+    returning();
+    expect(await launch()).not.toContain("data-grok-move-popup");
+    expect(await relaunch()).not.toContain("data-grok-move-popup");
+    expect(launchNotice()).not.toBe(GROK_MOVE_NOTICE);
+    expect(events()).toEqual([]);
   });
 
   it("someone already here sees it at their next launch, a modal with the two marks, and it reads nothing on this computer", async () => {
@@ -1001,10 +1017,10 @@ describe("the Move from Grok Bot popup", () => {
     for (const part of ['role="dialog"', 'aria-modal="true"', "data-grok-move-popup"]) expect(html).toContain(part);
     expect(events()).toEqual(["shown"]);
     expect(launchNotice()).toBe(GROK_MOVE_NOTICE);
-    expect(launchDialogShown(), "MausBot's card waits for a later launch").toBe("notices");
+    expect(launchDialogShown(), "Iris Agent's card waits for a later launch").toBe("notices");
     expect(await settle()).toContain(TITLE);
     expect(events(), "shown is counted once").toHaveLength(1);
-    expect(reads(), "showing it looks at neither Downloads nor the Grok Bot app").toEqual([]);
+    expect(reads(), "showing it looks at neither Downloads nor the Grok app").toEqual([]);
   });
 
   it("goes first in the queue, one a launch: What's new, then the rest, wait for later launches", async () => {
@@ -1109,7 +1125,7 @@ describe("the Move from Grok Bot popup", () => {
 });
 
 describe("the Simple mode popup after the update", () => {
-  const TITLE = "Try the new Simple mode", ON = "You&#x27;re on Simple mode", POPUP = "Meet the new MausBot Cloud";
+  const TITLE = "Try the new Simple mode", ON = "You&#x27;re on Simple mode", POPUP = "Meet the new Iris Agent Cloud";
   let modal: boolean;
   const prompts = () => vi.mocked(track).mock.calls.filter(([event]) => event === "simple_mode_prompt").map(([, props]) => props);
 
@@ -1362,7 +1378,7 @@ describe("bots in two places", () => {
 });
 
 describe("ModelGo's sponsor card", () => {
-  const TITLE = "ModelGo is now in MausBot", LINE = "One API key, every model.";
+  const TITLE = "ModelGo is now in Iris Agent", LINE = "One API key, every model.";
   const URL_EXACT = "https://modelgo.ai/?utm_source=openmausbot&utm_medium=sponsorship&utm_content=app&campaign_id=openmausbot&ad_group_id=app";
   const due = () => { storage.delete(MODELGO_OFFER_NOTICE); };
   const events = () => vi.mocked(track).mock.calls.filter(([name]) => name === "modelgo_offer").map(([, props]) => props);
@@ -1480,11 +1496,11 @@ describe("ModelGo's sponsor card", () => {
   it("after an update, What's new takes the launch and the card follows it in that same launch once it closes, then never again", async () => {
     returning(); desk.saved = null; storage.delete(WHATS_NEW_NOTICE);
     const first = await launch();
-    expect(first).toContain("Meet the new MausBot Cloud"); expect(first, "never two at once").not.toContain(TITLE);
+    expect(first).toContain("Meet the new Iris Agent Cloud"); expect(first, "never two at once").not.toContain(TITLE);
     expect(events()).toEqual([]);
     press("Not now"); await flush();
     const after = await settle();
-    expect(after, "right after What's new closes").toContain(TITLE); expect(after).not.toContain("Meet the new MausBot Cloud");
+    expect(after, "right after What's new closes").toContain(TITLE); expect(after).not.toContain("Meet the new Iris Agent Cloud");
     expect(events()).toEqual([{ action: "shown", place: "popup" }]);
     expect(launchNotice(), "What's new keeps the launch").toBe(WHATS_NEW_NOTICE);
     expect(await launch(), "a reload in the same launch").toContain(TITLE);
@@ -1501,13 +1517,13 @@ describe("ModelGo's sponsor card", () => {
       consent: createUpdatesConsent({ prefs, account: () => client as never, available: async () => true, now: () => now }) });
     await launch(); press("Not now"); await flush();
     const question = await settle();
-    expect(question).toContain("Get MausBot updates?"); expect(question).not.toContain(TITLE);
+    expect(question).toContain("Get Iris Agent updates?"); expect(question).not.toContain(TITLE);
     press("No thanks"); await flush();
     expect(await settle(), "then the card, in the same launch").toContain(TITLE);
   });
 
   it("a notice to act on keeps its place: the move popup or a trial's notice comes first, and the card follows it once closed", async () => {
-    storage.delete(GROK_MOVE_NOTICE); returning();
+    f.grok = true; storage.delete(GROK_MOVE_NOTICE); returning();
     vi.stubGlobal("document", { activeElement: null, body: null, documentElement: { dataset: {} }, getElementById: () => null,
       querySelector: (selector: string) => selector === "[data-grok-move-popup]" ? { querySelectorAll: () => [] } : null, querySelectorAll: () => [] });
     const grok = await launch();
@@ -1526,7 +1542,7 @@ describe("ModelGo's sponsor card", () => {
 
   it("a card left up keeps the corner: the card waits for it to close", async () => {
     returning(); storage.delete(STAR_NOTICE); storage.set(CLOUD_INTRO, "1"); storage.set(MODELGO_OFFER_NOTICE, "1");
-    expect(await launch()).toContain("Enjoying MausBot?");
+    expect(await launch()).toContain("Enjoying Iris Agent?");
     due();
     expect(await settle(), "the star took the launch and is still up").not.toContain(TITLE);
     press("Not now"); await flush();
@@ -1614,11 +1630,11 @@ describe("cards from the announcements file", () => {
     feed = [card("first-card"), card("second-card")];
     returning(); desk.saved = null; storage.delete(WHATS_NEW_NOTICE); storage.set(CLOUD_INTRO, "1");
     const popup = await launch();
-    expect(popup).toContain("Meet the new MausBot Cloud"); expect(popup, "never two at once").not.toContain("Title of first-card");
+    expect(popup).toContain("Meet the new Iris Agent Cloud"); expect(popup, "never two at once").not.toContain("Title of first-card");
     expect(events()).toEqual([]);
     press("Not now"); await flush();
     const after = await settle();
-    expect(after, "right after What's new closes").toContain("Title of first-card"); expect(after).not.toContain("Meet the new MausBot Cloud");
+    expect(after, "right after What's new closes").toContain("Title of first-card"); expect(after).not.toContain("Meet the new Iris Agent Cloud");
     expect(launchNotice(), "What's new keeps the launch").toBe(WHATS_NEW_NOTICE);
     expect(await launch(), "a reload in the same launch").toContain("Title of first-card");
     press("Not now"); await flush();
@@ -1628,7 +1644,7 @@ describe("cards from the announcements file", () => {
   });
 
   it("never over a notice to act on: the move popup keeps the corner, and the card follows it once closed", async () => {
-    storage.delete(GROK_MOVE_NOTICE); returning();
+    f.grok = true; storage.delete(GROK_MOVE_NOTICE); returning();
     vi.stubGlobal("document", { activeElement: null, body: null, documentElement: { dataset: {} }, getElementById: () => null,
       querySelector: (selector: string) => selector === "[data-grok-move-popup]" ? { querySelectorAll: () => [] } : null, querySelectorAll: () => [] });
     const grok = await launch();
@@ -1640,10 +1656,10 @@ describe("cards from the announcements file", () => {
 
   it("a card left up keeps the corner: a card that arrives meanwhile waits for it to close", async () => {
     returning(); storage.delete(STAR_NOTICE); storage.set(CLOUD_INTRO, "1"); feed = [];
-    expect(await launch()).toContain("Enjoying MausBot?");
+    expect(await launch()).toContain("Enjoying Iris Agent?");
     feed = [card("phone-app")]; forgetAnnouncementCards();
     const still = await settle();
-    expect(still, "the star took the launch and is still up").toContain("Enjoying MausBot?"); expect(still).not.toContain("Title of phone-app");
+    expect(still, "the star took the launch and is still up").toContain("Enjoying Iris Agent?"); expect(still).not.toContain("Title of phone-app");
     press("Not now"); await flush();
     expect(await settle()).toContain("Title of phone-app");
   });
@@ -1712,8 +1728,8 @@ describe("cards from the announcements file", () => {
   });
 });
 
-describe("Update MausBot on your phone", () => {
-  const TITLE = "Update MausBot on your phone", MODELGO = "ModelGo is now in MausBot";
+describe("Update Iris Agent on your phone", () => {
+  const TITLE = "Update Iris Agent on your phone", MODELGO = "ModelGo is now in Iris Agent";
   const OLD = { id: "0f8c2a41-1111-4222-8333-444455556666", name: "Ada's iPhone", createdAt: 1, lastSeenAt: 1, cloudDesktopAccess: false };
   const NEW = { id: "5b5b5b5b-1111-4222-8333-444455556666", name: "Work phone", createdAt: 1, lastSeenAt: 1, cloudDesktopAccess: false, e2eAt: 2 };
   const OTHER = { ...OLD, id: "7c7c7c7c-1111-4222-8333-444455556666", name: "Old Android" };
@@ -1730,7 +1746,7 @@ describe("Update MausBot on your phone", () => {
   it("shows once this computer's link ended and a paired phone has an older app: the phone, what to do, Open Phone & devices and Not now", async () => {
     const shown = await launch();
     expect(shown).toContain(TITLE); expect(shown).toContain('data-notice="phone-update"');
-    for (const text of ["Ada&#x27;s iPhone has an older version of the MausBot app, which can no longer connect to this computer away from your Wi-Fi.",
+    for (const text of ["Ada&#x27;s iPhone has an older version of the Iris Agent app, which can no longer connect to this computer away from your Wi-Fi.",
       "Update the app on that phone, then open it once on the same Wi-Fi as this computer. If that doesn&#x27;t reconnect it, pair it again.",
       "Open Phone &amp; devices", "Not now"]) expect(shown).toContain(text);
     expect(shown).not.toContain("Work phone");
@@ -1757,7 +1773,7 @@ describe("Update MausBot on your phone", () => {
 
   it("names how many phones when more than one has an older app", async () => {
     devices = [OLD, OTHER]; bridgesOn();
-    expect(await launch()).toContain("2 of your phones have an older version of the MausBot app");
+    expect(await launch()).toContain("2 of your phones have an older version of the Iris Agent app");
   });
 
   it("never when no paired phone has an older app, nor when this computer's link was not ended", async () => {
@@ -1788,14 +1804,14 @@ describe("Update MausBot on your phone", () => {
     expect(await launch()).toContain(TITLE);
   });
 
-  it("is a notice to act on: ahead of the sponsor's card, which follows once it is closed, and behind the Grok Bot popup", async () => {
+  it("is a notice to act on: ahead of the sponsor's card, which follows once it is closed, and behind the Grok popup", async () => {
     storage.delete(MODELGO_OFFER_NOTICE);
     expect(await launch()).toContain(TITLE);
     press("Not now"); await flush();
     expect(await settle(), "then the sponsor's card, in the same launch").toContain(MODELGO);
-    storage.delete(GROK_MOVE_NOTICE); session.clear(); f.state.config.onboarding.hintsSeen = withTourFinished(undefined); storage.delete("phone-app-update:0f8c2a41");
+    f.grok = true; storage.delete(GROK_MOVE_NOTICE); session.clear(); f.state.config.onboarding.hintsSeen = withTourFinished(undefined); storage.delete("phone-app-update:0f8c2a41");
     const first = await launch();
-    expect(first, "the Grok Bot popup goes first").not.toContain(TITLE);
+    expect(first, "the Grok popup goes first").not.toContain(TITLE);
     expect(launchNotice()).toBe(GROK_MOVE_NOTICE);
   });
 
@@ -1812,7 +1828,7 @@ describe("Update MausBot on your phone", () => {
 });
 
 describe("the Teams What's new", () => {
-  const TITLE = "MausBot is better with your team", GROK = "Move from Grok Bot";
+  const TITLE = "Iris Agent is better with your team", GROK = "Move from Grok";
   const POINTS = ["One shared bot for everyone: set it up once, everyone uses it.", "Team files and templates everyone&#x27;s bots can use.",
     "Private chats stay private, even from admins.", "$40 a month for 2 people, $20 for each extra person."];
   const TEAM = { id: "team-acme", name: "Acme", cloudPage: "https://admin.openmausbot.com/cloud" };
@@ -1841,6 +1857,7 @@ describe("the Teams What's new", () => {
     .map(([, init]) => JSON.parse(String((init as RequestInit).body)));
 
   beforeEach(() => {
+    f.grok = true;
     storage.delete(TEAMS_NOTICE); firstScreen = false;
     vi.stubGlobal("document", { activeElement: null, body: null, documentElement: { dataset: {} }, getElementById: () => null, querySelector: () => null,
       querySelectorAll: (selector: string) => firstScreen && selector.includes("[data-team-welcome]") ? [{ closest: () => null, checkVisibility: () => true }] : [] });
@@ -1851,9 +1868,9 @@ describe("the Teams What's new", () => {
     const html = await launch();
     for (const text of [TITLE, ...POINTS, "Start a team", "Not now"]) expect(html).toContain(text);
     for (const part of ['role="dialog"', 'aria-modal="true"', 'aria-labelledby="teams-popup-title"', 'data-teams-popup="start"', "teams-card-in", "teams-face-in"]) expect(html).toContain(part);
-    for (const other of [GROK, "Meet the new MausBot Cloud", STAR]) expect(html).not.toContain(other);
+    for (const other of [GROK, "Meet the new Iris Agent Cloud", STAR]) expect(html).not.toContain(other);
     expect(launchNotice(), "it takes the launch").toBe(TEAMS_NOTICE);
-    expect(launchDialogShown(), "MausBot's card waits for a later launch").toBe("notices");
+    expect(launchDialogShown(), "Iris Agent's card waits for a later launch").toBe("notices");
     expect(steps()).toContain("seen");
     expect(vi.mocked(track)).toHaveBeenCalledWith("whats_new", { action: "seen", slide: "teams", audience: "no_team", campaign: TEAMS_NOTICE });
     press("Start a team"); await flush();

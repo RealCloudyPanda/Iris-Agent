@@ -8,7 +8,13 @@ import { TEAMS_NOTICE } from "@/lib/notices";
 import type { AnnouncementCard } from "../../../shared/announcements";
 import type { Announcements } from "./use-announcements";
 
-const f = vi.hoisted(() => ({ found: null as unknown as Announcements, dispatch: vi.fn(), state: { config: {} as Record<string, unknown> }, remembered: vi.fn() }));
+const f = vi.hoisted(() => ({ found: null as unknown as Announcements, dispatch: vi.fn(), state: { config: {} as Record<string, unknown> }, remembered: vi.fn(), grok: false }));
+// The Grok move is built but not offered in Iris Agent (GROK_MOVE_OFFERED is
+// false); the test of its popup's row turns the offer on for itself.
+vi.mock("@/lib/notices", async original => {
+  const notices = await original<typeof import("@/lib/notices")>();
+  return { ...notices, get GROK_MOVE_OFFERED() { return f.grok; } };
+});
 vi.mock("./use-announcements", () => ({ useAnnouncements: () => f.found }));
 vi.mock("@/state/store", () => ({ useStore: () => ({ state: f.state, dispatch: f.dispatch }), api: vi.fn() }));
 vi.mock("@/lib/analytics", () => ({ track: vi.fn() }));
@@ -40,7 +46,7 @@ const rows = () => [...document.querySelectorAll<HTMLElement>("[data-announcemen
 const click = async (element: Element | null | undefined) => { expect(element).toBeTruthy(); await act(async () => { (element as HTMLElement).click(); await Promise.resolve(); }); };
 
 beforeEach(() => {
-  setLocale("en"); vi.clearAllMocks(); f.state = { config: {} };
+  setLocale("en"); vi.clearAllMocks(); f.state = { config: {} }; f.grok = false;
   host = document.createElement("div"); document.body.append(host);
   vi.stubGlobal("open", vi.fn());
 });
@@ -51,12 +57,12 @@ describe("Announcements", () => {
     f.found = found(desktop);
     await open();
     expect(document.querySelector("h1")?.textContent).toBe("Announcements");
-    expect(rows().map(row => row.dataset.announcementItem)).toEqual([card.id, TEAMS_NOTICE, "modelgo-offer-2026-11", "grok-move-2026-11", "whats-new-2026-11",
+    expect(rows().map(row => row.dataset.announcementItem)).toEqual([card.id, TEAMS_NOTICE, "modelgo-offer-2026-11", "whats-new-2026-11",
       "boat-credit-2026-11", "product-hunt-launch-2026-10", "cloud-trial-intro-v1"]);
     const teams = rows()[1]!;
     expect(teams.querySelector("time")?.getAttribute("datetime")).toBe("2026-11-17T00:00:00.000Z");
     expect(teams.textContent).toContain("Nov 17, 2026");
-    expect(teams.textContent).toContain("MausBot is better with your team");
+    expect(teams.textContent).toContain("Iris Agent is better with your team");
     expect(teams.textContent).toContain("Show again");
     const hunt = rows().find(row => row.dataset.announcementItem === "product-hunt-launch-2026-10")!;
     expect(hunt.querySelector("[data-announcement-ended]")?.textContent).toBe("Ended");
@@ -100,6 +106,11 @@ describe("Announcements", () => {
     expect(document.querySelector("[data-teams-popup]")).toBeNull();
     expect(f.remembered).toHaveBeenCalledWith(TEAMS_NOTICE, undefined, expect.objectContaining({ team: false }));
 
+    expect(rows().some(row => row.dataset.announcementItem === "grok-move-2026-11"), "the Grok move is not offered").toBe(false);
+    await act(async () => root?.unmount()); root = null;
+    f.grok = true;
+    f.found = found(browser);
+    await open();
     await click(rows().find(row => row.dataset.announcementItem === "grok-move-2026-11")?.querySelector("button"));
     await click(document.querySelector("[data-grok-move-popup] [data-primary]"));
     expect(document.querySelector("[data-grok-move-dialog]"), "Let's start opens the move, as from the popup").not.toBeNull();

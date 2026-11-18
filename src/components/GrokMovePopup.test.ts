@@ -28,13 +28,13 @@ afterEach(async () => {
   host.remove();
 });
 
-describe("the Move from Grok Bot popup", () => {
+describe("the Move from Grok popup", () => {
   it("is the two marks, a title, one sentence, Let's start and Not now, and nothing else", () => {
     const dialog = host.querySelector('[role="dialog"]')!;
     expect(dialog.getAttribute("aria-modal")).toBe("true");
-    expect(dialog.querySelector("svg path[fill-rule]"), "Grok Bot's mark").not.toBeNull();
+    expect(dialog.querySelector("svg path[fill-rule]"), "Grok's mark").not.toBeNull();
     expect(dialog.querySelector("[data-our-mark]"), "ours").not.toBeNull();
-    expect(dialog.querySelector("h2")?.textContent).toBe("Move from Grok Bot");
+    expect(dialog.querySelector("h2")?.textContent).toBe("Move from Grok");
     expect(dialog.querySelectorAll("p")).toHaveLength(1);
     expect([...dialog.querySelectorAll("button")].map((node) => node.textContent?.trim() || node.getAttribute("aria-label"))).toEqual(["Let's start", "Not now", "Close"]);
     expect(document.activeElement).toBe(button("Let's start"));
