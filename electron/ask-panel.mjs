@@ -1,3 +1,4 @@
+import { PANEL_THEME } from "./panel-theme.mjs";
 import { fileURLToPath } from "node:url";
 
 export const ASK_PANEL = Object.freeze({ width: 480, margin: 24, minHeight: 80, maxHeight: 360 });
@@ -15,35 +16,39 @@ export function askPanelBounds(workArea, height) {
   };
 }
 
-const LIGHT = "--panel:#f7f7f7;--border:#0000001f;--ink:#0d0d0d;--ink2:#444;--accent:#0b62c4;--warning:#8a5a00;--danger:#c02b3a;--field:#fff";
-
 export function askPanelHtml() {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><title>Ask MausBot</title><style>
-:root{color-scheme:dark light;--panel:#161616;--border:#ffffff22;--ink:#fcfcfc;--ink2:#fcfcfcbf;--accent:#4aa3ff;--warning:#ffb340;--danger:#ff6b7a;--field:#0b0b0b}
-@media (prefers-color-scheme: light){:root{${LIGHT}}}
-*{box-sizing:border-box}html,body{margin:0;background:transparent;overflow:hidden;font:13px/1.4 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:var(--ink)}
-#card{display:flex;flex-direction:column;gap:8px;max-height:360px;padding:12px;border:1px solid var(--border);border-radius:14px;background:var(--panel)}
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; base-uri 'none'; form-action 'none'"><title>Ask Iris</title><style>
+${PANEL_THEME}
+*{box-sizing:border-box}html,body{margin:0;background:transparent;overflow:hidden;font:13px/1.4 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;color:var(--color-ink)}
+#card{display:flex;flex-direction:column;gap:12px;max-height:360px;padding:16px;border:1px solid var(--color-hairline);border-radius:14px;background:var(--color-panel);overflow:auto}
 .row{display:flex;gap:8px;align-items:center}.grow{flex:1;min-width:0}
-select,textarea,button{font:inherit;color:var(--ink);background:var(--field);border:1px solid var(--border);border-radius:8px}
-select{padding:4px 6px}textarea{width:100%;resize:none;padding:8px;min-height:40px;max-height:110px}
-button{padding:4px 10px;cursor:pointer}button:disabled{opacity:.5;cursor:default}
-#send{background:var(--accent);border-color:var(--accent);color:#fff}
-:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-label{display:flex;gap:6px;align-items:center;color:var(--ink2)}
-#why{color:var(--ink2);font-size:12px}
-#picker{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;overflow:auto;max-height:150px}
-#picker button{display:flex;flex-direction:column;gap:2px;padding:4px;text-align:left}#picker img{width:100%;height:70px;object-fit:contain}
+.heading{display:flex;flex-direction:column;gap:4px;min-width:0}.heading strong{font-size:17px;font-weight:600}.heading span{color:var(--color-ink-secondary);font-size:12px}
+select,textarea,button{font:inherit;color:var(--color-ink);background:var(--color-inset);border:1px solid var(--color-hairline);border-radius:8px}
+select{padding:4px 8px;min-height:32px;max-width:100%}textarea{width:100%;resize:none;padding:12px;min-height:64px;max-height:110px}
+textarea::placeholder{color:var(--color-ink-secondary);opacity:1}
+button{padding:4px 12px;min-height:32px;border-radius:999px;cursor:pointer;transition:background-color 120ms ease-out}
+button:hover:not(:disabled){background:color-mix(in srgb,var(--color-ink) 8%,var(--color-inset))}button:disabled{opacity:.5;cursor:default}
+#send{background:var(--color-ink);border-color:var(--color-ink);color:var(--color-panel)}#send:hover:not(:disabled){background:color-mix(in srgb,var(--color-ink) 88%,var(--color-panel))}
+:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}
+label{display:flex;gap:8px;align-items:center;color:var(--color-ink-secondary)}input{accent-color:var(--color-focus)}
+#why{color:var(--color-ink-secondary);font-size:12px;max-width:120px}
+#picker{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;overflow:auto;max-height:150px}
+#picker button{display:flex;flex-direction:column;gap:4px;padding:4px;text-align:start;border-radius:8px}#picker img{width:100%;height:70px;object-fit:contain}
 #picker span{font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%}
-#chip{display:flex;gap:6px;align-items:center}#chip img{height:44px;border-radius:4px;border:1px solid var(--border)}
-#status{color:var(--ink2)}.error#status{color:var(--danger)}.needs-you#status{color:var(--warning)}
-#reply{white-space:pre-wrap;overflow:auto;overflow-wrap:anywhere;user-select:text;max-height:140px}
+#chip{display:flex;gap:8px;align-items:center}#chip img{height:44px;border-radius:8px;border:1px solid var(--color-hairline)}
+#status{color:var(--color-ink-secondary);font-size:12px;min-height:16px}.error#status{color:var(--color-danger)}.needs-you#status{color:var(--color-warning)}
+#status:empty::before{content:"Choose a bot, then ask about your screen."}
+#status.sending::before,#status.thinking::before{content:"";display:inline-block;width:8px;height:8px;margin-inline-end:8px;border-radius:50%;background:currentColor}
+#reply{white-space:pre-wrap;overflow:auto;overflow-wrap:anywhere;user-select:text;max-height:140px;font-size:15px;line-height:22px}#reply:empty{display:none}
+#perm{color:var(--color-ink-secondary);font-size:12px}
 [hidden]{display:none!important}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
-</style></head><body><div id="card" role="dialog" aria-label="Ask MausBot">
+</style></head><body><div id="card" role="dialog" aria-label="Ask Iris">
+<div class="heading"><strong>Iris</strong><span>Ask about your screen</span></div>
 <div class="row"><select id="bot" class="grow" aria-label="Bot"></select><button id="close" type="button" aria-label="Hide (Esc)">✕</button></div>
-<textarea id="q" rows="2" aria-label="Your question" placeholder="Ask… (Enter sends, Shift+Enter for a new line)"></textarea>
-<div class="row"><label class="grow"><input id="inc" type="checkbox" aria-keyshortcuts="Meta+I"> Include window (⌘I)</label><span id="why"></span><button id="send" type="button">Send</button></div>
-<div id="perm" hidden><span>Screen Recording is off for MausBot. Text asks still work.</span> <button id="settings" type="button">Open Privacy settings</button></div>
+<textarea id="q" rows="2" aria-label="Your question" placeholder="What would you like to know?"></textarea>
+<div class="row"><label class="grow"><input id="inc" type="checkbox" aria-keyshortcuts="Meta+I"> Include window (⌘I)</label><span id="why"></span><button id="send" type="button">Ask</button></div>
+<div id="perm" hidden><span>Screen Recording is off for Iris. Text asks still work.</span> <button id="settings" type="button">Open Privacy settings</button></div>
 <div id="picker" role="listbox" aria-label="Windows" hidden></div>
 <div id="chip" hidden><img id="shot" alt="Selected window preview"><button id="unchip" type="button" aria-label="Remove window">✕</button></div>
 <div class="row"><span id="status" class="grow" role="status" aria-live="polite"></span><button id="open" type="button" hidden>Open chat</button></div>
@@ -52,7 +57,7 @@ label{display:flex;gap:6px;align-items:center;color:var(--ink2)}
 const api=window.ask,$=id=>document.getElementById(id);
 const bot=$("bot"),q=$("q"),inc=$("inc"),picker=$("picker"),chip=$("chip"),status=$("status"),reply=$("reply");
 const STATES={sending:"Sending…",thinking:"Thinking…","needs-you":"Needs you · Open chat",done:"Done",error:"Something went wrong"};
-const ERRORS={busy:"Still answering the last ask.","server-down":"MausBot's server is not reachable.",starting:"MausBot is starting.",refused:"The server refused the ask.",moved:"This computer's bots moved to My Cloud.",lost:"Lost the connection; the reply is in the chat.",upload:"The screenshot could not be uploaded.","no-bot":"That bot is gone.",failed:"The turn failed."};
+const ERRORS={busy:"Still answering the last ask.","server-down":"Couldn't reach Iris. Check the app and try again.",starting:"Iris is starting.",refused:"The server refused the ask.",moved:"This computer's bots moved to My Cloud.",lost:"Lost the connection; the reply is in the chat.",upload:"The screenshot could not be uploaded.","no-bot":"That bot is gone.",failed:"Couldn't answer. Try again or open the chat."};
 let bots=[],busy=false,captured=false;
 const capable=()=>bots.find(b=>b.id===bot.value)?.imageCapable===true;
 function syncToggle(){const ok=capable();inc.disabled=!ok;$("why").textContent=ok?"":"This bot can't see images";if(!ok&&inc.checked){inc.checked=false;toggled()}bot.disabled=busy}
