@@ -36980,7 +36980,14 @@
       "imageGen.complexity.help": "b932b5a36319d04701dcf3bc04227e92a9b5db0d3b46ba62a39ddafef1303ac4",
       "imageGen.complexity.low": "f793de205ead5ac302c4a1627829dea41f176b1068b993a32373fc869918374b",
       "imageGen.complexity.medium": "8e588cd187741f1cd76f5fab77b7208782a8c21d764ce7d7a4cf3ac4e0968873",
-      "imageGen.complexity.high": "c4ebc6d4a5832cd9415f906ad03661110c705a72381c8b8b145761d02e2dd23a"
+      "imageGen.complexity.high": "c4ebc6d4a5832cd9415f906ad03661110c705a72381c8b8b145761d02e2dd23a",
+      "mascot.body.iris": "65003c7a186430e894caa11372a179dbdcac2cbf99724dacc1455efe1c2582a9",
+      "mascot.body.orb": "8483460e43ab483cf3a2bba4d08777c5c11a1dcea2f73662ec54cadee582fe7a",
+      "mascot.body.pebble": "b901d921d255c25afcf53d303abc2fe611ff9fb07fea4fe0ffc855531defbd9c",
+      "mascot.body.hex": "69493e6f1a6957cad7e3ece5267a57e8a8ed035b5ea5fd7e360ce9eb2405c30b",
+      "mascot.body.petal": "b83a3f99e94caf446feb772bae06df9fb8b0641765d250e5aa97f868a3abc07f",
+      "mascot.body.mochi": "95114c81f3949880fd8d0340260b9be954014fa457a7379aeee08fe404a042db",
+      "mascot.body.spark": "529bc3b07127ecb7e53a4dcf1991d9152c24537d919178022b2c42657f79a26b"
     },
     "zh": {
       "pro.fromPrice": "7f4439293e13747e67c1f67e11ddfbe3e11607cd862fb41aab475302cc1d2ec5",

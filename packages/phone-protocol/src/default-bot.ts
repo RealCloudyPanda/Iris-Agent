@@ -6,7 +6,7 @@ import type { MausColor } from "./wire.ts";
 export const DEFAULT_BOT_NAME = "Iris";
 /** The name upstream installs gave the built-in helper; still recognised as the seeded one, never given to a new bot. */
 export const LEGACY_DEFAULT_BOT_NAME = "MausBot";
-export const DEFAULT_BOT_COLOR: MausColor = "chrome";
+export const DEFAULT_BOT_COLOR: MausColor = "purple";
 
 export interface DefaultBotMark {
   /** Team Cloud only: the lowercased email of the member this MausBot belongs to. Absent: the place's own. */

@@ -11155,5 +11155,12 @@
   "alwaysOn.added.screen": "Os bots de lá usam a tela, o navegador e os arquivos daquele computador, depois que o {app} tiver permissão para usá-lo.",
   "alwaysOn.windowClosed": "Continua rodando quando a janela é fechada",
   "alwaysOn.windowClosedLinux": "Continua rodando quando a janela é fechada. Abra o {app} de novo para trazer a janela de volta; para sair, pressione Alt e escolha Arquivo → Sair do Iris Agent.",
-  "alwaysOn.status.noWay": "Casa ligada · nenhum celular ou computador consegue alcançá-la ainda"
+  "alwaysOn.status.noWay": "Casa ligada · nenhum celular ou computador consegue alcançá-la ainda",
+  "mascot.body.iris": "Íris",
+  "mascot.body.orb": "Orbe",
+  "mascot.body.pebble": "Seixo",
+  "mascot.body.hex": "Hexágono",
+  "mascot.body.petal": "Pétala",
+  "mascot.body.mochi": "Mochi",
+  "mascot.body.spark": "Faísca"
 }
