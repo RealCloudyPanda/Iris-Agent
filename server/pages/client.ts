@@ -28,7 +28,7 @@ interface Minted {
   plan?: string;
 }
 
-export const SIGN_IN_MESSAGE = "Publishing a page needs a Iris Agent account. Sign in to Iris Agent in the app's Settings, then ask again.";
+export const SIGN_IN_MESSAGE = "Publishing a page needs an Iris Agent account. Sign in to Iris Agent in the app's Settings, then ask again.";
 const UNAVAILABLE = "Publishing isn't available right now. Try again in a few minutes.";
 const NOT_TURNED_ON = "Publishing pages isn't turned on for this account yet.";
 /** A server with no desktop app to sign in through and no Cloud home (`openmausbot serve`): no Settings sign-in can help. */

@@ -97,7 +97,7 @@ export const RELAY_NOT_WITH_TUNNEL = "--relay cannot be used on a machine whose 
 export function relayProblemLines(status: PhoneRelayStatus | null, prefix: string): string[] {
   if (!status) return [`Iris Agent Relay is off on this server. Start it with: ${prefix} serve --relay`];
   if (status.grant === "tunnel") return [`Iris Agent Relay stays off here: ${status.reason ?? "this machine holds a tunnel address"}. A relay token would make that tunnel go for good; use the relay on a machine signed in with ${prefix} login --relay.`];
-  if (status.grant === "signed-out") return [`Iris Agent Relay needs this machine signed in to a Iris Agent account: ${prefix} login --relay (then leave the server running; it connects within a minute).`];
+  if (status.grant === "signed-out") return [`Iris Agent Relay needs this machine signed in to an Iris Agent account: ${prefix} login --relay (then leave the server running; it connects within a minute).`];
   if (status.grant === "unavailable") return ["Iris Agent Relay is not available for this machine right now. The server keeps working here; it asks again every half hour."];
   if (status.grant === "failed") return ["The Iris Agent account service did not answer. The server keeps working here and keeps trying."];
   if (status.grant === "waiting") return ["Still asking the Iris Agent account service for a relay pass…"];

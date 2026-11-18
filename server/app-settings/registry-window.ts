@@ -52,7 +52,7 @@ export function windowEntries(windowPref: WindowPref): SettingEntry[] {
       "Get Iris Agent product update emails (your email address is sent to Iris Agent)", "Stop Iris Agent product update emails"),
     wayIn("remote.wifi", "Same Wi-Fi", "Paired phones reach this computer on the same Wi-Fi network.", "wifi", ["wifi", "wi-fi", "lan", "local network", "remote access"],
       "Let your paired phones reach this computer on the same Wi-Fi"),
-    wayIn("remote.relay", "Reach from anywhere", "Paired phones reach this computer from anywhere through Iris Agent's relay (needs a Iris Agent sign-in).", "relay", ["relay", "anywhere", "away", "remote access"],
+    wayIn("remote.relay", "Reach from anywhere", "Paired phones reach this computer from anywhere through Iris Agent's relay (needs an Iris Agent sign-in).", "relay", ["relay", "anywhere", "away", "remote access"],
       "Let your paired phones reach this computer from anywhere, through Iris Agent's relay"),
     wayIn("remote.tailscale", "Tailscale", "Paired devices reach this computer over your Tailscale network (Tailscale must be installed and signed in).", "tailscale", ["tailscale", "tailnet", "remote access"],
       "Let your devices reach this computer over Tailscale"),

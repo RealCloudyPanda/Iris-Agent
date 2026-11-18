@@ -8934,7 +8934,7 @@
   "serverError.owner.departmentAdmin": "只有 {team} 的管理員可以設定部門的機器人向誰回報。",
   "serverError.owner.unavailable": "有一個或多個機器人無法使用。",
   "serverError.bot.missing": "找不到這個機器人",
-  "serverError.owner.personal": "{bot} 是 {name} 自己的 Iris Agent：它一律向對方回報。",
+  "serverError.owner.personal": "{bot} 是 {name} 自己的 Iris：它一律向對方回報。",
   "serverError.owner.change": "只有 {team} 的管理員，或 {bot} 回報的對象，可以變更它向誰回報。",
   "serverError.helper.ownerOnly": "只有擁有者可以回答這個問題。",
   "serverError.helper.missing": "沒有這個建議。",
