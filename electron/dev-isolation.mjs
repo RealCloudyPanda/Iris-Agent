@@ -2,6 +2,8 @@ import path from "node:path";
 
 export const DEV_APP_DIR_NAME = "OpenMausBot-Dev";
 export const DEV_DATA_DIR_NAME = ".openmausbot-dev";
+// Iris Agent keeps its own data so it never runs a server on the same folder as an installed OpenMausBot.
+export const PACKAGED_DATA_DIR_NAME = ".iris-agent";
 
 /** Where a dev build keeps its Electron state, or null for a packaged build (which keeps Electron's defaults). */
 export function devAppPaths({ isPackaged, appData, home, platform }) {
@@ -24,5 +26,5 @@ export function applyDevIsolation(app, platform = process.platform) {
 
 // An empty OMB_DATA_DIR falls back too; server/config.ts would not, so the child gets this path.
 export function defaultServerDataDir({ isPackaged, home, env }) {
-  return env.OMB_DATA_DIR || path.join(home, isPackaged ? ".openmausbot" : DEV_DATA_DIR_NAME);
+  return env.OMB_DATA_DIR || path.join(home, isPackaged ? PACKAGED_DATA_DIR_NAME : DEV_DATA_DIR_NAME);
 }

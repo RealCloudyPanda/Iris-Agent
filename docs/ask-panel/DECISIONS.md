@@ -115,3 +115,9 @@ Status legend: **Accepted** (user decided) · **Amended** (accepted, then change
 - Upstream: https://github.com/milind-soni/OpenMausBot at `c175749a`
 - OpenAI, Sign in with ChatGPT for open-source apps: https://developers.openai.com/siwc/token-sharing-open-source
 - Anthropic, Claude Code legal and compliance: https://code.claude.com/docs/en/legal-and-compliance
+
+## Round 6 (2026-11-18)
+
+| ID | Decision | Status |
+|---|---|---|
+| D46 | The packaged Iris Agent keeps its server data in `~/.iris-agent` (dev: `~/.openmausbot-dev`), never `~/.openmausbot`, so it can run next to an installed OpenMausBot. Existing MausBot bots are not imported; Iris Agent starts empty. Save-file and the data-folder guard follow the running folder, and cloud sync never uploads it. | Accepted |

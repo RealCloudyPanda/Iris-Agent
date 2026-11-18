@@ -48,8 +48,8 @@ test("a packaged build is left exactly as Electron set it up", () => {
   assert.deepEqual(app.calls, []);
 });
 
-test("the server data folder defaults to ~/.openmausbot when packaged and ~/.openmausbot-dev in dev", () => {
-  assert.equal(defaultServerDataDir({ isPackaged: true, home: "/Users/me", env: {} }), path.join("/Users/me", ".openmausbot"));
+test("the server data folder defaults to ~/.iris-agent when packaged and ~/.openmausbot-dev in dev", () => {
+  assert.equal(defaultServerDataDir({ isPackaged: true, home: "/Users/me", env: {} }), path.join("/Users/me", ".iris-agent"));
   assert.equal(defaultServerDataDir({ isPackaged: false, home: "/Users/me", env: {} }), path.join("/Users/me", ".openmausbot-dev"));
 });
 

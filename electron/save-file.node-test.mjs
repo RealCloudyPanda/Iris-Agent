@@ -45,6 +45,16 @@ describe("save-file path validation", () => {
     assert.equal(await resolveSavablePath(pathToFileURL(file).href, { home }), expected);
   });
 
+  it("uses the running data folder, not ~/.openmausbot, when one is given", async () => {
+    const dataDir = path.join(home, ".iris-agent");
+    fs.mkdirSync(path.join(dataDir, "workspaces", "bot"), { recursive: true });
+    const file = path.join(dataDir, "workspaces", "bot", "notes.txt");
+    fs.writeFileSync(file, "notes");
+    assert.equal(await resolveSavablePath(file, { home, dataDir }), await fs.promises.realpath(file));
+    const outside = path.join(botHome, "workspaces", "bot", "report.docx");
+    await assert.rejects(resolveSavablePath(outside, { home, dataDir }));
+  });
+
   it("accepts a file under a symlinked bot home", { skip: !canSymlink }, async () => {
     const realHome = fs.mkdtempSync(path.join(os.tmpdir(), "omb-real-home-"));
     const linkedHome = fs.mkdtempSync(path.join(os.tmpdir(), "omb-linked-home-"));
