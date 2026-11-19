@@ -58,7 +58,8 @@ function git(cwd, args) {
 }
 
 export function resolveBase(cwd, requested) {
-  const candidates = requested ? [requested] : ["origin/companion", "companion"];
+  // The upstream commit this fork started from, so every line the fork added is checked; branch names are fallbacks.
+  const candidates = requested ? [requested] : ["c175749a8becc545bf29f4ec40c8fd1eeab8cf41", "origin/main", "main"];
   for (const ref of candidates) {
     try {
       git(cwd, ["rev-parse", "--verify", "--quiet", `${ref}^{commit}`]);
