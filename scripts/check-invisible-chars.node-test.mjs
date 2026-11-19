@@ -18,7 +18,7 @@ function fixtureRepo(t) {
   const dir = mkdtempSync(path.join(tmpdir(), "invisible-chars-"));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
   const git = (...args) => execFileSync("git", args, { cwd: dir, encoding: "utf8" });
-  git("init", "-q", "-b", "companion");
+  git("init", "-q", "-b", "main");
   git("config", "user.email", "fixture@example.test");
   git("config", "user.name", "Fixture");
   git("config", "commit.gpgsign", "false");
@@ -67,7 +67,7 @@ test("catches an invisible character on an added line that begins with ++", (t) 
   repo.write("upstream.ts", `export const joiner = "a${ZWSP}b";\nexport const plain = 1;\n++ "${ZWSP}";\n`);
   repo.write("new.md", `++ hidden ${RLO}\n`);
   repo.commit("header lookalikes");
-  const result = run(repo.dir, "companion");
+  const result = run(repo.dir, "main");
   assert.equal(result.status, 1);
   assert.deepEqual(result.stderr.trim().split("\n").slice(1).sort(), ["new.md:1:U+202E", "upstream.ts:3:U+200B"]);
 });
@@ -88,20 +88,20 @@ test("fails listing file:line:codepoint for added and modified files, skipping u
   repo.write("new.ts", `// ok\nconst label = "${RLO}evil";\nconst hy = "soft${SOFT_HYPHEN}hyphen";\n`);
   repo.write("blob.bin", Buffer.concat([Buffer.from([0, 1, 2]), Buffer.from(ZWSP)]));
   repo.commit("dirty change");
-  const result = run(repo.dir, "companion");
+  const result = run(repo.dir, "main");
   assert.equal(result.status, 1);
   const listed = result.stderr.trim().split("\n").slice(1).sort();
   assert.deepEqual(listed, ["new.ts:2:U+202E", "new.ts:3:U+00AD", "upstream.ts:3:U+E0041"]);
 });
 
-test("defaults to origin/companion and falls back to companion", (t) => {
+test("defaults to the upstream pin, then origin/main, then main", (t) => {
   const repo = fixtureRepo(t);
   repo.write("new.ts", `const z = "${ZWSP}";\n`);
   repo.commit("dirty");
-  assert.equal(findInvisibleChars({ cwd: repo.dir }).base, "companion");
-  repo.git("update-ref", "refs/remotes/origin/companion", "HEAD");
+  assert.equal(findInvisibleChars({ cwd: repo.dir }).base, "main");
+  repo.git("update-ref", "refs/remotes/origin/main", "HEAD");
   const viaOrigin = findInvisibleChars({ cwd: repo.dir });
-  assert.equal(viaOrigin.base, "origin/companion");
+  assert.equal(viaOrigin.base, "origin/main");
   assert.deepEqual(viaOrigin.findings, []);
 });
 
